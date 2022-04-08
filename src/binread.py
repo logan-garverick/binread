@@ -45,6 +45,17 @@ def configure_parser() -> None:
 
 
 def get_BinaryFile_from_path(path) -> BinaryFile:
+    """Verifies that the provided binary exists and retrieves the appropriate BinaryFile instance based on the detected file format
+
+    Args:
+        path (str): file path of the provided binary
+
+    Raises:
+        FileNotFoundError: raised of the proivided binary file does not exist
+
+    Returns:
+        BinaryFile: a BinaryFile instance corresponding to the determined file format
+    """
 
     try:
         # Verify that provided binary exists
@@ -68,6 +79,8 @@ def get_BinaryFile_from_path(path) -> BinaryFile:
 
 
 def binread() -> None:
+    """Main function of execution for the binread tool"""
+
     binary = get_BinaryFile_from_path(args.BINARY)
     print(f"DEBUG: type(binary) --> {type(binary)}\n")
 
