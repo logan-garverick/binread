@@ -48,7 +48,7 @@ def binread() -> None:
 if __name__ == "__main__":
     # Initialize parser object
     parser = argparse.ArgumentParser(
-        description="Analyze a binary file and produce a list of polymorphic instruction swaps."
+        description="Analyze a provided binary file and display information collected from it."
     )
     configure_parser()
     args = parser.parse_args()
