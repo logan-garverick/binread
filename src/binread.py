@@ -3,6 +3,9 @@ Description: Main execution point for the BinRead tool.
 """
 
 import argparse
+from os.path import exists
+from BinaryFileFactory import BinaryFileFactory
+from BinaryFile import BinaryFile
 from bcolors import *
 
 
@@ -41,8 +44,32 @@ def configure_parser() -> None:
     )
 
 
+def get_BinaryFile_from_path(path) -> BinaryFile:
+
+    try:
+        # Verify that provided binary exists
+        if exists(args.BINARY):
+
+            # Attempt to create a BinaryFile object
+            fac = BinaryFileFactory()
+            bf = fac.get_BinaryFile_instance(args.BINARY)
+            if bf is not None:
+                return bf
+            else:
+                print(
+                    f"\t{colors.FAIL}ERROR{colors.ENDC}:Unable to determine binary format. Stopping analysis."
+                )
+                exit(1)
+        else:
+            raise FileNotFoundError
+    except FileNotFoundError:
+        print(f"\t{colors.FAIL}ERROR:{colors.ENDC}{args.binary} was not found.")
+        exit(1)
+
+
 def binread() -> None:
-    pass
+    binary = get_BinaryFile_from_path(args.BINARY)
+    print(f"DEBUG: type(binary) --> {type(binary)}\n")
 
 
 if __name__ == "__main__":
