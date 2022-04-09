@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "32-bit PE",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-a",
+                "${workspaceFolder}/examples/hello_pe32.exe"
+            ],
+            "justMyCode": true
+        }
+    ]
+}
