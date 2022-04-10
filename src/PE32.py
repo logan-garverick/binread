@@ -11,7 +11,13 @@ E_RES2_SIZE = 0x14
 IMAGE_FILE_HEADER_OFFSET = 0x4
 IMAGE_OPTIONAL_HEADER_OFFSET = 0x18
 IMAGE_DIRECTORY_ENTRY_IMPORT_OFFSET = 0x80
-IMAGE_IMPORT_DESCRIPTOR_SIZE = 0x14
+IMAGE_DIRECTORY_ENTRY_TLS_OFFSET = 0xB8
+IMAGE_DIRECTORY_ENTRY_IAT_OFFSET = 0xD0
+IMAGE_FILE_MACHINE_DICT = {
+    0x014C: "IMAGE_FILE_MACHINE_I386",
+    0x0200: "IMAGE_FILE_MACHINE_IA64",
+    0x8664: "IMAGE_FILE_MACHINE_AMD64",
+}
 
 
 class PE32(BinaryFile):
@@ -25,6 +31,38 @@ class PE32(BinaryFile):
         self._IMAGE_FILE_HEADER = self._read_IMAGE_FILE_HEADER()
         self._IMAGE_OPTIONAL_HEADER = self._read_IMAGE_OPTIONAL_HEADER()
         self._IMAGE_DIRECTORY_ENTRY_IMPORT = self._read_IMAGE_DIRECTORY_ENTRY_IMPORT()
+        self._IMAGE_DIRECTORY_ENTRY_TLS = self._read_IMAGE_DIRECTORY_ENTRY_TLS()
+
+    def print_header_info(self) -> None:
+        print(
+            f"DOS HEADER (_IMAGE_DOS_HEADER):\n"
+            + f"    Magic Number:\t\t\t{hex(self._IMAGE_DOS_HEADER['e_magic'])} ({self._IMAGE_DOS_HEADER['e_magic_characters']})\n"
+            + f"    Bytes in last page:\t\t\t{self._IMAGE_DOS_HEADER['e_cblp']}\n"
+            + f"    Pages in file:\t\t\t{self._IMAGE_DOS_HEADER['e_cp']}\n"
+            + f"    Relocations:\t\t\t{self._IMAGE_DOS_HEADER['e_crlc']}\n"
+            + f"    Size of header in paragraphs:\t{self._IMAGE_DOS_HEADER['e_cparhdr']}\n"
+            + f"    Minimum extra paragraphs:\t\t{self._IMAGE_DOS_HEADER['e_minalloc']}\n"
+            + f"    Maximum extra paragraphs:\t\t{self._IMAGE_DOS_HEADER['e_maxalloc']}\n"
+            + f"    Initial (relative) SS value:\t{self._IMAGE_DOS_HEADER['e_ss']}\n"
+            + f"    Initial SP value:\t\t\t{hex(self._IMAGE_DOS_HEADER['e_sp'])}\n"
+            + f"    Checksum:\t\t\t\t{self._IMAGE_DOS_HEADER['e_csum']}\n"
+            + f"    Initial IP value:\t\t\t{self._IMAGE_DOS_HEADER['e_ip']}\n"
+            + f"    Initial (relative) CS value:\t{self._IMAGE_DOS_HEADER['e_cs']}\n"
+            + f"    File address of relocation table:\t{hex(self._IMAGE_DOS_HEADER['e_lfarlc'])}\n"
+            + f"    Overlay number:\t\t\t{self._IMAGE_DOS_HEADER['e_ovno']}\n"
+            + f"    OEM Identifier:\t\t\t{self._IMAGE_DOS_HEADER['e_oemid']}\n"
+            + f"    OEM Information:\t\t\t{self._IMAGE_DOS_HEADER['e_oeminfo']}\n"
+            + f"    File address of new exe header:\t{hex(self._IMAGE_DOS_HEADER['e_lfanew'])}\n"
+            + f"\n"
+            + f"COFF/FILE HEADER (_IMAGE_FILE_HEADER):\n"
+            + f"    Machine:\t\t\t\t{hex(self._IMAGE_FILE_HEADER['Machine'])} ({self._IMAGE_FILE_HEADER['MachineName']})\n"
+            + f"    Number of Sections:\t\t\t{self._IMAGE_FILE_HEADER['NumberOfSections']}\n"
+            + f"    Time Stamp:\t\t\t\t{self._IMAGE_FILE_HEADER['TimeDateStamp']}\n"
+            + f"    Address of Symbol Table:\t\t{hex(self._IMAGE_FILE_HEADER['PointerToSymbolTable'])}\n"
+            + f"    Number of Symbols:\t\t\t{self._IMAGE_FILE_HEADER['NumberOfSymbols']}\n"
+            + f"    Size of Optional Header:\t\t{hex(self._IMAGE_FILE_HEADER['SizeOfOptionalHeader'])}\n"
+            + f"    Characteristics:\t\t\t{hex(self._IMAGE_FILE_HEADER['Characteristics'])}\n"
+        )
 
     def _find_endianess(self) -> None:
         """All windows PE formats are assumed to be compiled in Little Endian format"""
@@ -99,6 +137,10 @@ class PE32(BinaryFile):
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
 
+            # Translate magic numbers into characters
+            e_magicHexBytes = _IMAGE_DOS_HEADER["e_magic"].to_bytes(4, "little")
+            _IMAGE_DOS_HEADER["e_magic_characters"] = e_magicHexBytes.decode("utf-8")
+
             return _IMAGE_DOS_HEADER
 
     def _read_IMAGE_FILE_HEADER(self) -> dict:
@@ -129,6 +171,10 @@ class PE32(BinaryFile):
             )
             (_IMAGE_FILE_HEADER["Characteristics"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
+            )
+            # Translate Machine ID into Name
+            _IMAGE_FILE_HEADER["MachineName"] = IMAGE_FILE_MACHINE_DICT.get(
+                _IMAGE_FILE_HEADER["Machine"]
             )
 
             return _IMAGE_FILE_HEADER
@@ -249,14 +295,53 @@ class PE32(BinaryFile):
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
 
-            # Read imported DLL information
-            dlls = self._read_IMAGE_IMPORT_DESCRIPTORs(
-                IMAGE_DIRECTORY_ENTRY_IMPORT["VirtualAddress"]
+            # HALT:: This section has been removed until further development has concluded.  This parsing
+            #        requires a conversion from RVA->PA which is dependent on section segment information.
+
+            # # Read imported DLL information
+            # dlls = self._read_IMAGE_IMPORT_DESCRIPTORs(
+            #     IMAGE_DIRECTORY_ENTRY_IMPORT["VirtualAddress"]
+            # )
+
+            # print("DEBUG:: Collected DLLs:\n")
+            # for dll in dlls:
+            #     print(dll)
+
+            return IMAGE_DIRECTORY_ENTRY_IMPORT
+
+    def _read_IMAGE_DIRECTORY_ENTRY_TLS(self) -> dict:
+        IMAGE_DIRECTORY_ENTRY_TLS = {}
+        with open(self.path, "rb") as file:
+            # Jump to the _IMAGE_DIRECTORY_ENTRY_TLS struct
+            file.seek(self._IMAGE_DOS_HEADER["e_lfanew"], 0)
+            file.seek(IMAGE_DIRECTORY_ENTRY_TLS_OFFSET, 1)
+
+            # Parse information from _IMAGE_DIRECTORY_ENTRY_TLS struct
+            (IMAGE_DIRECTORY_ENTRY_TLS["VirtualAddress"],) = struct.unpack(
+                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+            )
+            (IMAGE_DIRECTORY_ENTRY_TLS["Size"],) = struct.unpack(
+                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
 
-            print("Collected DLLs:\n")
-            for dll in dlls:
-                print(dll)
+            return IMAGE_DIRECTORY_ENTRY_TLS
+
+    def _read_IMAGE_DIRECTORY_ENTRY_IAT(self) -> dict:
+        IMAGE_DIRECTORY_ENTRY_IAT = {}
+        with open(self.path, "rb") as file:
+            # Jump to the _IMAGE_DIRECTORY_ENTRY_IAT struct
+            file.seek(self._IMAGE_DOS_HEADER["e_lfanew"], 0)
+            file.seek(IMAGE_DIRECTORY_ENTRY_IAT_OFFSET, 1)
+
+            # Parse information from _IMAGE_DIRECTORY_ENTRY_IAT struct
+            (IMAGE_DIRECTORY_ENTRY_IAT["VirtualAddress"],) = struct.unpack(
+                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+            )
+            (IMAGE_DIRECTORY_ENTRY_IAT["Size"],) = struct.unpack(
+                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+            )
+
+            return IMAGE_DIRECTORY_ENTRY_IAT
 
     def _read_IMAGE_IMPORT_DESCRIPTORs(self, virtualAddress) -> list:
 
