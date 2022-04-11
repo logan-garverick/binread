@@ -10,6 +10,43 @@ E_RES1_SIZE = 0x8
 E_RES2_SIZE = 0x14
 IMAGE_FILE_HEADER_OFFSET = 0x4
 IMAGE_OPTIONAL_HEADER_OFFSET = 0x18
+IMAGE_OPTIONAL_HEADER_MAGIC_DICT = {
+    0x10B: "IMAGE_NT_OPTIONAL_HDR32_MAGIC",
+    0x20B: "IMAGE_NT_OPTIONAL_HDR64_MAGIC",
+    0x107: "IMAGE_ROM_OPTIONAL_HDR_MAGIC",
+}
+IMAGE_OPTIONAL_HEADER_SUBSYSTEM_DICT = {
+    0: "IMAGE_SUBSYSTEM_UNKNOWN",
+    1: "IMAGE_SUBSYSTEM_NATIVE",
+    2: "IMAGE_SUBSYSTEM_WINDOWS_GUI",
+    3: "IMAGE_SUBSYSTEM_WINDOWS_CUI",
+    5: "IMAGE_SUBSYSTEM_OS2_CUI",
+    7: "IMAGE_SUBSYSTEM_POSIX_CUI",
+    9: "IMAGE_SUBSYSTEM_WINDOWS_CE_GUI",
+    10: "IMAGE_SUBSYSTEM_EFI_APPLICATION",
+    11: "IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER",
+    12: "IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER",
+    13: "IMAGE_SUBSYSTEM_EFI_ROM",
+    14: "IMAGE_SUBSYSTEM_XBOX",
+    16: "IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION",
+}
+IMAGE_OPTIONAL_HEADER_DLLCHARACTERISTICS_DICT = {
+    0x0001: "Reserved",
+    0x0002: "Reserved",
+    0x0004: "Reserved",
+    0x0008: "Reserved",
+    0x0020: "IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA",
+    0x0040: "IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE",
+    0x0080: "IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY",
+    0x0100: "IMAGE_DLLCHARACTERISTICS_NX_COMPAT",
+    0x0200: "IMAGE_DLLCHARACTERISTICS_NO_ISOLATION",
+    0x0400: "IMAGE_DLLCHARACTERISTICS_NO_SEH",
+    0x0800: "IMAGE_DLLCHARACTERISTICS_NO_BIND",
+    0x1000: "IMAGE_DLL_CHARACTERISTICS_APPCONTAINER",
+    0x2000: "IMAGE_DLLCHARACTERISTICS_WDM_DRIVER",
+    0x4000: "IMAGE_DLL_CHARACTERISTICS_GUARD_CF",
+    0x8000: "IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE",
+}
 IMAGE_DATA_DIRECTORY_TABLE_OFFSET = 0x78
 IMAGE_DATA_DIRECTORY_DICT = [
     "IMAGE_DIRECTORY_ENTRY_EXPORT",
@@ -49,8 +86,6 @@ class PE32(BinaryFile):
         self._IMAGE_FILE_HEADER = self._read_IMAGE_FILE_HEADER()
         self._IMAGE_OPTIONAL_HEADER = self._read_IMAGE_OPTIONAL_HEADER()
         self._IMAGE_DATA_DIRECTORY_TABLE = self._read_IMAGE_DATA_DIRECTORY_array()
-        self._IMAGE_DIRECTORY_ENTRY_IMPORT = self._read_IMAGE_DIRECTORY_ENTRY_IMPORT()
-        self._IMAGE_DIRECTORY_ENTRY_TLS = self._read_IMAGE_DIRECTORY_ENTRY_TLS()
 
     def print_header_info(self) -> None:
         print(
@@ -68,7 +103,7 @@ class PE32(BinaryFile):
             + f"    Initial IP Value:\t\t\t{self._IMAGE_DOS_HEADER['e_ip']}\n"
             + f"    Initial (relative) CS Value:\t{self._IMAGE_DOS_HEADER['e_cs']}\n"
             + f"    File Address of relocation table:\t{hex(self._IMAGE_DOS_HEADER['e_lfarlc'])}\n"
-            + f"    Overlay Number:\t\t\t{self._IMAGE_DOS_HEADER['e_ovno']}\n"
+            + f"    Overlay Number:\t\t\t{hex(self._IMAGE_DOS_HEADER['e_ovno'])}\n"
             + f"    OEM Identifier:\t\t\t{self._IMAGE_DOS_HEADER['e_oemid']}\n"
             + f"    OEM Information:\t\t\t{self._IMAGE_DOS_HEADER['e_oeminfo']}\n"
             + f"    File Address of New Exe Header:\t{hex(self._IMAGE_DOS_HEADER['e_lfanew'])}\n"
@@ -83,14 +118,14 @@ class PE32(BinaryFile):
             + f"    Characteristics:\t\t\t{hex(self._IMAGE_FILE_HEADER['Characteristics'])}\n"
             + f"\n"
             + f"OPTIONAL HEADER (_IMAGE_OPTIONAL_HEADER):\n"
-            + f"    Magic:\t\t\t\t{self._IMAGE_OPTIONAL_HEADER['Magic']}\n"
+            + f"    Magic:\t\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['Magic'])} ({self._IMAGE_OPTIONAL_HEADER['MagicName']})\n"
             + f"    Linker Version:\t\t\t{self._IMAGE_OPTIONAL_HEADER['MajorLinkerVersion']}.{self._IMAGE_OPTIONAL_HEADER['MinorLinkerVersion']}\n"
-            + f"    Size of Code:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfCode'])}\n"
-            + f"    Size of Initialized Data:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfInitializedData'])}\n"
-            + f"    Size of Uninitialized Data:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfUninitializedData'])}\n"
+            + f"    Size of .text section:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfCode'])}\n"
+            + f"    Size of .data section:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfInitializedData'])}\n"
+            + f"    Size of .bss section:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfUninitializedData'])}\n"
             + f"    Address of Entry Point:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['AddressOfEntryPoint'])}\n"
-            + f"    Base of Code:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['BaseOfCode'])}\n"
-            + f"    Base of Data:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['BaseOfData'])}\n"
+            + f"    Address of .text section:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['BaseOfCode'])}\n"
+            + f"    Address of .data section:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['BaseOfData'])}\n"
             + f"    Image Base:\t\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['ImageBase'])}\n"
             + f"    Section Alignment:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SectionAlignment'])}\n"
             + f"    File Alignment:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['FileAlignment'])}\n"
@@ -101,14 +136,20 @@ class PE32(BinaryFile):
             + f"    Size of Image:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfImage'])}\n"
             + f"    Size of Headers:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfHeaders'])}\n"
             + f"    Checksum:\t\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['Checksum'])}\n"
-            + f"    Subsystem:\t\t\t\t{self._IMAGE_OPTIONAL_HEADER['Subsystem']}\n"
-            + f"    DLL Characteristics:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['DllCharacteristics'])}\n"
-            + f"    Size of Stack Reserve:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfStackReserve'])}\n"
+            + f"    Subsystem:\t\t\t\t{self._IMAGE_OPTIONAL_HEADER['Subsystem']} ({self._IMAGE_OPTIONAL_HEADER['SubsystemName']})\n"
+            + f"    DLL Characteristics:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['DllCharacteristics'])}"
+        )
+        # If DLLCharacteristics is not 0, print all DLL Characteristics
+        if self._IMAGE_OPTIONAL_HEADER["DllCharacteristics"] != 0:
+            for characteristic in self._IMAGE_OPTIONAL_HEADER["ListOfDllChars"]:
+                print(f"       - {characteristic}")
+        print(
+            f"    Size of Stack Reserve:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfStackReserve'])}\n"
             + f"    Size of Stack Commit:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfStackCommit'])}\n"
             + f"    Size of Heap Reserve:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfHeapReserve'])}\n"
             + f"    Sizeof Heap Commit:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfHeapCommit'])}\n"
             + f"    Loader Flags:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['LoaderFlags'])}\n"
-            + f"    Number of RVA and Sizes:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['NumberOfRvaAndSizes'])}\n"
+            + f"    Number of RVA and Sizes:\t\t{self._IMAGE_OPTIONAL_HEADER['NumberOfRvaAndSizes']}\n"
             + f"\n"
             + f"DATA DIRECTORIES (_IMAGE_OPTIONAL_HEADER):"
         )
@@ -246,6 +287,10 @@ class PE32(BinaryFile):
             (_IMAGE_OPTIONAL_HEADER["Magic"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Translate Magic value into name
+            _IMAGE_OPTIONAL_HEADER["MagicName"] = IMAGE_OPTIONAL_HEADER_MAGIC_DICT[
+                _IMAGE_OPTIONAL_HEADER["Magic"]
+            ]
             (_IMAGE_OPTIONAL_HEADER["MajorLinkerVersion"],) = struct.unpack(
                 self.formatDict["BYTE_F"], file.read(self.formatDict["BYTE_S"])
             )
@@ -312,9 +357,26 @@ class PE32(BinaryFile):
             (_IMAGE_OPTIONAL_HEADER["Subsystem"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Translate Subsystem value into name
+            _IMAGE_OPTIONAL_HEADER[
+                "SubsystemName"
+            ] = IMAGE_OPTIONAL_HEADER_SUBSYSTEM_DICT[
+                _IMAGE_OPTIONAL_HEADER["Subsystem"]
+            ]
             (_IMAGE_OPTIONAL_HEADER["DllCharacteristics"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            if _IMAGE_OPTIONAL_HEADER["DllCharacteristics"] != 0x0:
+                # Initialize a list to store all parsed DLL characteristics
+                _IMAGE_OPTIONAL_HEADER["ListOfDllChars"] = []
+                # Translate DLL Charachetistics value into a list of characteristics
+                for charID in list(
+                    IMAGE_OPTIONAL_HEADER_DLLCHARACTERISTICS_DICT.keys()
+                ):
+                    if _IMAGE_OPTIONAL_HEADER["DllCharacteristics"] & charID == charID:
+                        _IMAGE_OPTIONAL_HEADER["ListOfDllChars"].append(
+                            IMAGE_OPTIONAL_HEADER_DLLCHARACTERISTICS_DICT[charID]
+                        )
             (_IMAGE_OPTIONAL_HEADER["SizeOfStackReserve"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
@@ -366,69 +428,6 @@ class PE32(BinaryFile):
                     pass
 
             return _IMAGE_DATA_DIRECTORY_TABLE
-
-    def _read_IMAGE_DIRECTORY_ENTRY_IMPORT(self) -> dict:
-        IMAGE_DIRECTORY_ENTRY_IMPORT = {}
-        with open(self.path, "rb") as file:
-            # Jump to the _IMAGE_DIRECTORY_ENTRY_IMPORT struct
-            file.seek(self._IMAGE_DOS_HEADER["e_lfanew"], 0)
-            file.seek(IMAGE_DIRECTORY_ENTRY_IMPORT_OFFSET, 1)
-
-            # Parse information from _IMAGE_DIRECTORY_ENTRY_IMPORT struct
-            (IMAGE_DIRECTORY_ENTRY_IMPORT["VirtualAddress"],) = struct.unpack(
-                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
-            )
-            (IMAGE_DIRECTORY_ENTRY_IMPORT["Size"],) = struct.unpack(
-                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
-            )
-
-            # HALT:: This section has been removed until further development has concluded.  This parsing
-            #        requires a conversion from RVA->PA which is dependent on section segment information.
-
-            # # Read imported DLL information
-            # dlls = self._read_IMAGE_IMPORT_DESCRIPTORs(
-            #     IMAGE_DIRECTORY_ENTRY_IMPORT["VirtualAddress"]
-            # )
-
-            # print("DEBUG:: Collected DLLs:\n")
-            # for dll in dlls:
-            #     print(dll)
-
-            return IMAGE_DIRECTORY_ENTRY_IMPORT
-
-    def _read_IMAGE_DIRECTORY_ENTRY_TLS(self) -> dict:
-        IMAGE_DIRECTORY_ENTRY_TLS = {}
-        with open(self.path, "rb") as file:
-            # Jump to the _IMAGE_DIRECTORY_ENTRY_TLS struct
-            file.seek(self._IMAGE_DOS_HEADER["e_lfanew"], 0)
-            file.seek(IMAGE_DIRECTORY_ENTRY_TLS_OFFSET, 1)
-
-            # Parse information from _IMAGE_DIRECTORY_ENTRY_TLS struct
-            (IMAGE_DIRECTORY_ENTRY_TLS["VirtualAddress"],) = struct.unpack(
-                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
-            )
-            (IMAGE_DIRECTORY_ENTRY_TLS["Size"],) = struct.unpack(
-                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
-            )
-
-            return IMAGE_DIRECTORY_ENTRY_TLS
-
-    def _read_IMAGE_DIRECTORY_ENTRY_IAT(self) -> dict:
-        IMAGE_DIRECTORY_ENTRY_IAT = {}
-        with open(self.path, "rb") as file:
-            # Jump to the _IMAGE_DIRECTORY_ENTRY_IAT struct
-            file.seek(self._IMAGE_DOS_HEADER["e_lfanew"], 0)
-            file.seek(IMAGE_DIRECTORY_ENTRY_IAT_OFFSET, 1)
-
-            # Parse information from _IMAGE_DIRECTORY_ENTRY_IAT struct
-            (IMAGE_DIRECTORY_ENTRY_IAT["VirtualAddress"],) = struct.unpack(
-                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
-            )
-            (IMAGE_DIRECTORY_ENTRY_IAT["Size"],) = struct.unpack(
-                self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
-            )
-
-            return IMAGE_DIRECTORY_ENTRY_IAT
 
     def _read_IMAGE_IMPORT_DESCRIPTORs(self, virtualAddress) -> list:
 
