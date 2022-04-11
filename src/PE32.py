@@ -9,6 +9,23 @@ import struct
 E_RES1_SIZE = 0x8
 E_RES2_SIZE = 0x14
 IMAGE_FILE_HEADER_OFFSET = 0x4
+IMAGE_FILE_HEADER_CHARACTERISTICS_DICT = {
+    0x0001: "IMAGE_FILE_RELOCS_STRIPPED",
+    0x0002: "IMAGE_FILE_EXECUTABLE_IMAGE",
+    0x0004: "IMAGE_FILE_LINE_NUMS_STRIPPED",
+    0x0008: "IMAGE_FILE_LOCAL_SYMS_STRIPPED",
+    0x0010: "IMAGE_FILE_AGGRESIVE_WS_TRIM",
+    0x0020: "IMAGE_FILE_LARGE_ADDRESS_AWARE",
+    0x0080: "IMAGE_FILE_BYTES_REVERSED_LO",
+    0x0100: "IMAGE_FILE_32BIT_MACHINE",
+    0x0200: "IMAGE_FILE_DEBUG_STRIPPED",
+    0x0400: "IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP",
+    0x0800: "IMAGE_FILE_NET_RUN_FROM_SWAP",
+    0x1000: "IMAGE_FILE_SYSTEM",
+    0x2000: "IMAGE_FILE_DLL",
+    0x4000: "IMAGE_FILE_UP_SYSTEM_ONLY",
+    0x8000: "IMAGE_FILE_BYTES_REVERSED_HI",
+}
 IMAGE_OPTIONAL_HEADER_OFFSET = 0x18
 IMAGE_OPTIONAL_HEADER_MAGIC_DICT = {
     0x10B: "IMAGE_NT_OPTIONAL_HDR32_MAGIC",
@@ -65,9 +82,6 @@ IMAGE_DATA_DIRECTORY_DICT = [
     "IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT",
     "IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR",
 ]
-IMAGE_DIRECTORY_ENTRY_IMPORT_OFFSET = 0x80
-IMAGE_DIRECTORY_ENTRY_TLS_OFFSET = 0xB8
-IMAGE_DIRECTORY_ENTRY_IAT_OFFSET = 0xD0
 IMAGE_FILE_MACHINE_DICT = {
     0x014C: "IMAGE_FILE_MACHINE_I386",
     0x0200: "IMAGE_FILE_MACHINE_IA64",
@@ -122,8 +136,14 @@ class PE32(BinaryFile):
             + f"    Address of Symbol Table:\t\t{hex(self._IMAGE_FILE_HEADER['PointerToSymbolTable'])}\n"
             + f"    Number of Symbols:\t\t\t{self._IMAGE_FILE_HEADER['NumberOfSymbols']}\n"
             + f"    Size of Optional Header:\t\t{hex(self._IMAGE_FILE_HEADER['SizeOfOptionalHeader'])}\n"
-            + f"    Characteristics:\t\t\t{hex(self._IMAGE_FILE_HEADER['Characteristics'])}\n"
-            + f"\n"
+            + f"    Characteristics:\t\t\t{hex(self._IMAGE_FILE_HEADER['Characteristics'])}"
+        )
+        # If Characteristics is not 0, print all Characteristics
+        if self._IMAGE_FILE_HEADER["Characteristics"] != 0:
+            for characteristic in self._IMAGE_FILE_HEADER["ListOfChars"]:
+                print(f"       - {characteristic}")
+        print(
+            f"\n"
             + f"OPTIONAL HEADER (_IMAGE_OPTIONAL_HEADER):\n"
             + f"    Magic:\t\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['Magic'])} ({self._IMAGE_OPTIONAL_HEADER['MagicName']})\n"
             + f"    Linker Version:\t\t\t{self._IMAGE_OPTIONAL_HEADER['MajorLinkerVersion']}.{self._IMAGE_OPTIONAL_HEADER['MinorLinkerVersion']}\n"
@@ -269,6 +289,10 @@ class PE32(BinaryFile):
             (_IMAGE_FILE_HEADER["Machine"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Translate Machine ID into Name
+            _IMAGE_FILE_HEADER["MachineName"] = IMAGE_FILE_MACHINE_DICT.get(
+                _IMAGE_FILE_HEADER["Machine"]
+            )
             (_IMAGE_FILE_HEADER["NumberOfSections"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
@@ -287,10 +311,15 @@ class PE32(BinaryFile):
             (_IMAGE_FILE_HEADER["Characteristics"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
-            # Translate Machine ID into Name
-            _IMAGE_FILE_HEADER["MachineName"] = IMAGE_FILE_MACHINE_DICT.get(
-                _IMAGE_FILE_HEADER["Machine"]
-            )
+            if _IMAGE_FILE_HEADER["Characteristics"] != 0x0:
+                # Initialize a list to store all parsed DLL characteristics
+                _IMAGE_FILE_HEADER["ListOfChars"] = []
+                # Translate DLL Charachetistics value into a list of characteristics
+                for charID in list(IMAGE_FILE_HEADER_CHARACTERISTICS_DICT.keys()):
+                    if _IMAGE_FILE_HEADER["Characteristics"] & charID == charID:
+                        _IMAGE_FILE_HEADER["ListOfChars"].append(
+                            IMAGE_FILE_HEADER_CHARACTERISTICS_DICT[charID]
+                        )
 
             return _IMAGE_FILE_HEADER
 
