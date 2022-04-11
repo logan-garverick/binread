@@ -82,7 +82,7 @@ def binread() -> None:
     """Main function of execution for the binread tool"""
 
     binary = get_BinaryFile_from_path(args.BINARY)
-    print(f"DEBUG: type(binary) --> {type(binary)}\n")
+    binary.print_header_info()
 
 
 if __name__ == "__main__":
