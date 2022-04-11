@@ -79,6 +79,11 @@ class PE32(BinaryFile):
     """Windows Portable Executable (32-bit addressable)"""
 
     def __init__(self, path):
+        """Initializes local variables and analyze the provided binary file
+
+        Args:
+            path (str): file path of the provided binary
+        """
         self.path = path
         self.formatDict = None
         self._find_endianess()
@@ -88,6 +93,8 @@ class PE32(BinaryFile):
         self._IMAGE_DATA_DIRECTORY_TABLE = self._read_IMAGE_DATA_DIRECTORY_array()
 
     def print_header_info(self) -> None:
+        """Prints the header information parsed from the provided binary for the user to view"""
+
         print(
             f"DOS HEADER (_IMAGE_DOS_HEADER):\n"
             + f"    Magic Number:\t\t\t{hex(self._IMAGE_DOS_HEADER['e_magic'])} ({self._IMAGE_DOS_HEADER['e_magic_characters']})\n"
@@ -175,6 +182,11 @@ class PE32(BinaryFile):
         }
 
     def _read_IMAGE_DOS_HEADER(self) -> dict:
+        """Parse the _IMAGE_DOS_HEADER structure
+
+        Returns:
+            dict: dictionary of data parsed from the _IMAGE_DOS_HEADER structure
+        """
 
         _IMAGE_DOS_HEADER = {}
         with open(self.path, "rb") as file:
@@ -241,6 +253,12 @@ class PE32(BinaryFile):
             return _IMAGE_DOS_HEADER
 
     def _read_IMAGE_FILE_HEADER(self) -> dict:
+        """Parse the _IMAGE_FILE_HEADER structure
+
+        Returns:
+            dict: dictionary of data parsed from the _IMAGE_FILE_HEADER structure
+        """
+
         _IMAGE_FILE_HEADER = {}
         with open(self.path, "rb") as file:
             # Jump to the _IMAGE_FILE_HEADER struct
@@ -277,6 +295,12 @@ class PE32(BinaryFile):
             return _IMAGE_FILE_HEADER
 
     def _read_IMAGE_OPTIONAL_HEADER(self) -> dict:
+        """Parse the _IMAGE_OPTIONAL_HEADER structure
+
+        Returns:
+            dict: dictionary of data parsed from the _IMAGE_OPTIONAL_HEADER structure
+        """
+
         _IMAGE_OPTIONAL_HEADER = {}
         with open(self.path, "rb") as file:
             # Jump to the _IMAGE_OPTIONAL_HEADER struct
@@ -398,7 +422,13 @@ class PE32(BinaryFile):
 
             return _IMAGE_OPTIONAL_HEADER
 
-    def _read_IMAGE_DATA_DIRECTORY_array(self) -> list:
+    def _read_IMAGE_DATA_DIRECTORY_array(self) -> dict:
+        """Parses information about the existing data directories of the provided binary file
+
+        Returns:
+            dict: a dictionary of dictionaries, each containing the virtual address and size of a data dirtectory
+        """
+
         _IMAGE_DATA_DIRECTORY_TABLE = {}
         with open(self.path, "rb") as file:
             # Jump to the _IMAGE_DATA_DIRECTORY table at the end of the _IMAGE_OPTIONAL_HEADER struct
