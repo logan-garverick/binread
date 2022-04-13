@@ -14,5 +14,9 @@ class BinaryFile:
         """Determines the endianness of the provided binary file and allocated the proper unpacking formatters"""
 
     @abstractmethod
+    def print_file_type(self) -> None:
+        """Display the file type of the provided binary file"""
+
+    @abstractmethod
     def print_header_info(self) -> None:
         """Displays the information parsed from the provided binary file's headers"""
