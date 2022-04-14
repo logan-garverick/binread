@@ -3,6 +3,7 @@ Description: This file defines the PE32+ class inheriting from the BinaryFile cl
 """
 
 from BinaryFile import BinaryFile
+from bcolors import colors
 import struct
 
 
@@ -108,7 +109,9 @@ class PE32Plus(BinaryFile):
 
     def print_file_type(self) -> None:
         """Display the file type of the provided binary file"""
-        print(f"Windows Portable Executable, 64-bit Addressable (PE32+)\n")
+        print(
+            f"\n{colors.HEADER}{colors.BOLD}Windows Portable Executable, 64-bit Addressable (PE32+){colors.ENDC}\n"
+        )
 
     def print_header_info(self) -> None:
         """Prints the header information parsed from the provided binary for the user to view"""
@@ -288,29 +291,39 @@ class PE32Plus(BinaryFile):
             file.seek(self._IMAGE_DOS_HEADER["e_lfanew"], 0)
             file.seek(IMAGE_FILE_HEADER_OFFSET, 1)
 
-            # Parse _IMAGE_FILE_HEADER struct
+            # Read Machine and translate
             (_IMAGE_FILE_HEADER["Machine"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
-            # Translate Machine ID into Name
-            _IMAGE_FILE_HEADER["MachineName"] = IMAGE_FILE_MACHINE_DICT.get(
-                _IMAGE_FILE_HEADER["Machine"]
-            )
+            if _IMAGE_FILE_HEADER["Machine"] in IMAGE_FILE_MACHINE_DICT:
+                _IMAGE_FILE_HEADER["MachineName"] = IMAGE_FILE_MACHINE_DICT[
+                    _IMAGE_FILE_HEADER["Machine"]
+                ]
+            else:
+                _IMAGE_FILE_HEADER[
+                    "MachineName"
+                ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
+            # Read NumberOfSections
             (_IMAGE_FILE_HEADER["NumberOfSections"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Read TimeDateStamp
             (_IMAGE_FILE_HEADER["TimeDateStamp"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read PointerToSymbolTable
             (_IMAGE_FILE_HEADER["PointerToSymbolTable"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read NumberOfSymbols
             (_IMAGE_FILE_HEADER["NumberOfSymbols"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read SizeOfOptionalHeader
             (_IMAGE_FILE_HEADER["SizeOfOptionalHeader"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Read Characteristics and translate
             (_IMAGE_FILE_HEADER["Characteristics"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
@@ -339,83 +352,116 @@ class PE32Plus(BinaryFile):
             file.seek(self._IMAGE_DOS_HEADER["e_lfanew"], 0)
             file.seek(IMAGE_OPTIONAL_HEADER_OFFSET, 1)
 
-            # Parse _IMAGE_OPTIONAL_HEADER struct
+            # Read Magic and translate
             (_IMAGE_OPTIONAL_HEADER["Magic"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
-            # Translate Magic value into name
-            _IMAGE_OPTIONAL_HEADER["MagicName"] = IMAGE_OPTIONAL_HEADER_MAGIC_DICT[
-                _IMAGE_OPTIONAL_HEADER["Magic"]
-            ]
+            if _IMAGE_OPTIONAL_HEADER["Magic"] in IMAGE_OPTIONAL_HEADER_MAGIC_DICT:
+                _IMAGE_OPTIONAL_HEADER["MagicName"] = IMAGE_OPTIONAL_HEADER_MAGIC_DICT[
+                    _IMAGE_OPTIONAL_HEADER["Magic"]
+                ]
+            else:
+                _IMAGE_OPTIONAL_HEADER[
+                    "MagicName"
+                ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
+            # Read MajorLinkerVersion
             (_IMAGE_OPTIONAL_HEADER["MajorLinkerVersion"],) = struct.unpack(
                 self.formatDict["BYTE_F"], file.read(self.formatDict["BYTE_S"])
             )
+            # Read MinorLinkerVersion
             (_IMAGE_OPTIONAL_HEADER["MinorLinkerVersion"],) = struct.unpack(
                 self.formatDict["BYTE_F"], file.read(self.formatDict["BYTE_S"])
             )
+            # Read SizeOfCode
             (_IMAGE_OPTIONAL_HEADER["SizeOfCode"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read SizeOfInitializedData
             (_IMAGE_OPTIONAL_HEADER["SizeOfInitializedData"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read SizeOfUninitializedData
             (_IMAGE_OPTIONAL_HEADER["SizeOfUninitializedData"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read AddressOfEntryPoint
             (_IMAGE_OPTIONAL_HEADER["AddressOfEntryPoint"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read BaseOfCode
             (_IMAGE_OPTIONAL_HEADER["BaseOfCode"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read ImageBase
             (_IMAGE_OPTIONAL_HEADER["ImageBase"],) = struct.unpack(
                 self.formatDict["QWORD_F"], file.read(self.formatDict["QWORD_S"])
             )
+            # Read SectionAlignment
             (_IMAGE_OPTIONAL_HEADER["SectionAlignment"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read FileAlignment
             (_IMAGE_OPTIONAL_HEADER["FileAlignment"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read MajorOperatingSystemVersion
             (_IMAGE_OPTIONAL_HEADER["MajorOperatingSystemVersion"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Read MinorOperatingSystemVersion
             (_IMAGE_OPTIONAL_HEADER["MinorOperatingSystemVersion"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Read MajorImageVersion
             (_IMAGE_OPTIONAL_HEADER["MajorImageVersion"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Read MinorImageVersion
             (_IMAGE_OPTIONAL_HEADER["MinorImageVersion"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Read MajorSubsystemVersion
             (_IMAGE_OPTIONAL_HEADER["MajorSubsystemVersion"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Read MinorSubsystemVersion
             (_IMAGE_OPTIONAL_HEADER["MinorSubsystemVersion"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
+            # Read Win32VersionValue
             (_IMAGE_OPTIONAL_HEADER["Win32VersionValue"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read SizeOfImage
             (_IMAGE_OPTIONAL_HEADER["SizeOfImage"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read SizeOfHeaders
             (_IMAGE_OPTIONAL_HEADER["SizeOfHeaders"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read Checksum
             (_IMAGE_OPTIONAL_HEADER["Checksum"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read Subsystem and translate
             (_IMAGE_OPTIONAL_HEADER["Subsystem"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
-            # Translate Subsystem value into name
-            _IMAGE_OPTIONAL_HEADER[
-                "SubsystemName"
-            ] = IMAGE_OPTIONAL_HEADER_SUBSYSTEM_DICT[
+            if (
                 _IMAGE_OPTIONAL_HEADER["Subsystem"]
-            ]
+                in IMAGE_OPTIONAL_HEADER_SUBSYSTEM_DICT
+            ):
+                _IMAGE_OPTIONAL_HEADER[
+                    "SubsystemName"
+                ] = IMAGE_OPTIONAL_HEADER_SUBSYSTEM_DICT[
+                    _IMAGE_OPTIONAL_HEADER["Subsystem"]
+                ]
+            else:
+                _IMAGE_OPTIONAL_HEADER[
+                    "SubsystemName"
+                ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
+            # Read DllCharacteristics and translate
             (_IMAGE_OPTIONAL_HEADER["DllCharacteristics"],) = struct.unpack(
                 self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
             )
@@ -430,21 +476,27 @@ class PE32Plus(BinaryFile):
                         _IMAGE_OPTIONAL_HEADER["ListOfDllChars"].append(
                             IMAGE_OPTIONAL_HEADER_DLLCHARACTERISTICS_DICT[charID]
                         )
+            # Read SizeOfStackReserve
             (_IMAGE_OPTIONAL_HEADER["SizeOfStackReserve"],) = struct.unpack(
                 self.formatDict["QWORD_F"], file.read(self.formatDict["QWORD_S"])
             )
+            # Read SizeOfStackCommit
             (_IMAGE_OPTIONAL_HEADER["SizeOfStackCommit"],) = struct.unpack(
                 self.formatDict["QWORD_F"], file.read(self.formatDict["QWORD_S"])
             )
+            # Read SizeOfHeapReserve
             (_IMAGE_OPTIONAL_HEADER["SizeOfHeapReserve"],) = struct.unpack(
                 self.formatDict["QWORD_F"], file.read(self.formatDict["QWORD_S"])
             )
+            # Read SizeOfHeapCommit
             (_IMAGE_OPTIONAL_HEADER["SizeOfHeapCommit"],) = struct.unpack(
                 self.formatDict["QWORD_F"], file.read(self.formatDict["QWORD_S"])
             )
+            # Read LoaderFlags
             (_IMAGE_OPTIONAL_HEADER["LoaderFlags"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )
+            # Read NumberOfRvaAndSizes
             (_IMAGE_OPTIONAL_HEADER["NumberOfRvaAndSizes"],) = struct.unpack(
                 self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
             )

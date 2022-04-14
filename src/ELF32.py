@@ -3,6 +3,7 @@ Description: This file defines the ELF32 class inheriting from the BinaryFile cl
 """
 
 from BinaryFile import BinaryFile
+from bcolors import colors
 import struct
 
 
@@ -133,7 +134,9 @@ class ELF32(BinaryFile):
 
     def print_file_type(self) -> None:
         """Display the file type of the provided binary file"""
-        print(f"Executable and Linkable Format, 32-bit Addressable (ELF32)\n")
+        print(
+            f"\n{colors.HEADER}{colors.BOLD}Executable and Linkable Format, 32-bit Addressable (ELF32){colors.ENDC}\n"
+        )
 
     def print_header_info(self) -> None:
         """Prints the header information parsed from the provided binary for the user to view"""
@@ -171,7 +174,7 @@ class ELF32(BinaryFile):
                 + f"\tPhysical Address:\t\t{hex(Elf32_Phdr['p_paddr'])}\n"
                 + f"\tPhysical Size:\t\t\t{hex(Elf32_Phdr['p_filesz'])}\n"
                 + f"\tVirtual Size:\t\t\t{hex(Elf32_Phdr['p_memsz'])}\n"
-                + f"\tSegment Dependednt Flags:\t{hex(Elf32_Phdr['p_flags'])}\n"
+                + f"\tSegment Dependent Flags:\t{hex(Elf32_Phdr['p_flags'])}\n"
                 + f"\tAlignment:\t\t\t{hex(Elf32_Phdr['p_align'])}"
             )
 
@@ -243,13 +246,15 @@ class ELF32(BinaryFile):
             if e_ident["EI_CLASS"] in EI_CLASS_DICT:
                 e_ident["EI_CLASSName"] = EI_CLASS_DICT[e_ident["EI_CLASS"]]
             else:
-                e_ident["EI_CLASSName"] = "ERROR"
+                e_ident[
+                    "EI_CLASSName"
+                ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
             # Read and translate EI_DATA
             e_ident["EI_DATA"] = file.read(1)
             if e_ident["EI_DATA"] in EI_DATA_DICT:
                 e_ident["EI_DATAName"] = EI_DATA_DICT[e_ident["EI_DATA"]]
             else:
-                e_ident["EI_DATAName"] = "ERROR"
+                e_ident["EI_DATAName"] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
             # Read EI_VERSION
             e_ident["EI_VERSION"] = file.read(1)
             # Read and translate EI_OSABI
@@ -257,7 +262,9 @@ class ELF32(BinaryFile):
             if e_ident["EI_OSABI"] in EI_OSABI_DICT:
                 e_ident["EI_OSABIName"] = EI_OSABI_DICT[e_ident["EI_OSABI"]]
             else:
-                e_ident["EI_OSABIName"] = "ERROR"
+                e_ident[
+                    "EI_OSABIName"
+                ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
             # Read EI_ABIVERSION
             e_ident["EI_ABIVERSION"] = file.read(1)
 
@@ -274,12 +281,11 @@ class ELF32(BinaryFile):
             # Jump past the e_ident data structure
             _Elf32_Ehdr["e_ident"] = file.read(E_IDENT_SIZE)
 
-            # Parse the data from the ELF Header
+            # Read e_type and translate into name
             (_Elf32_Ehdr["e_type"],) = struct.unpack(
                 self.formatDict["Elf32_Half_F"],
                 file.read(self.formatDict["Elf32_Half_S"]),
             )
-            # Translate type flag into name
             if _Elf32_Ehdr["e_type"] in E_TYPE_DICT:
                 _Elf32_Ehdr["e_typeName"] = E_TYPE_DICT[_Elf32_Ehdr["e_type"]]
             elif _Elf32_Ehdr["e_type"] > ET_LOOS and _Elf32_Ehdr["e_type"] < ET_HIOS:
@@ -289,54 +295,71 @@ class ELF32(BinaryFile):
             ):
                 _Elf32_Ehdr["e_typeName"] = "Processor Specific"
             else:
-                _Elf32_Ehdr["e_typeName"] = "ERROR"
-
+                _Elf32_Ehdr[
+                    "e_typeName"
+                ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
+            # Read e_machine and translate into name
             (_Elf32_Ehdr["e_machine"],) = struct.unpack(
                 self.formatDict["Elf32_Half_F"],
                 file.read(self.formatDict["Elf32_Half_S"]),
             )
-            # Translate type flag into name
-            _Elf32_Ehdr["e_machineName"] = E_MACHINE_DICT[_Elf32_Ehdr["e_machine"]]
+            if _Elf32_Ehdr["e_machine"] in E_MACHINE_DICT:
+                _Elf32_Ehdr["e_machineName"] = E_MACHINE_DICT[_Elf32_Ehdr["e_machine"]]
+            else:
+                _Elf32_Ehdr[
+                    "e_machineName"
+                ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
+            # Read e_version
             (_Elf32_Ehdr["e_version"],) = struct.unpack(
                 self.formatDict["Elf32_Word_F"],
                 file.read(self.formatDict["Elf32_Word_S"]),
             )
+            # Read e_entry
             (_Elf32_Ehdr["e_entry"],) = struct.unpack(
                 self.formatDict["Elf32_Addr_F"],
                 file.read(self.formatDict["Elf32_Addr_S"]),
             )
+            # Read e_phoff
             (_Elf32_Ehdr["e_phoff"],) = struct.unpack(
                 self.formatDict["Elf32_Off_F"],
                 file.read(self.formatDict["Elf32_Off_S"]),
             )
+            # Read e_shoff
             (_Elf32_Ehdr["e_shoff"],) = struct.unpack(
                 self.formatDict["Elf32_Off_F"],
                 file.read(self.formatDict["Elf32_Off_S"]),
             )
+            # Read e_flags
             (_Elf32_Ehdr["e_flags"],) = struct.unpack(
                 self.formatDict["Elf32_Word_F"],
                 file.read(self.formatDict["Elf32_Word_S"]),
             )
+            # Read e_ehsize
             (_Elf32_Ehdr["e_ehsize"],) = struct.unpack(
                 self.formatDict["Elf32_Half_F"],
                 file.read(self.formatDict["Elf32_Half_S"]),
             )
+            # Read e_phentsize
             (_Elf32_Ehdr["e_phentsize"],) = struct.unpack(
                 self.formatDict["Elf32_Half_F"],
                 file.read(self.formatDict["Elf32_Half_S"]),
             )
+            # Read e_phnum
             (_Elf32_Ehdr["e_phnum"],) = struct.unpack(
                 self.formatDict["Elf32_Half_F"],
                 file.read(self.formatDict["Elf32_Half_S"]),
             )
+            # Read e_shentsize
             (_Elf32_Ehdr["e_shentsize"],) = struct.unpack(
                 self.formatDict["Elf32_Half_F"],
                 file.read(self.formatDict["Elf32_Half_S"]),
             )
+            # Read e_shnum
             (_Elf32_Ehdr["e_shnum"],) = struct.unpack(
                 self.formatDict["Elf32_Half_F"],
                 file.read(self.formatDict["Elf32_Half_S"]),
             )
+            # Read e_shstrndx
             (_Elf32_Ehdr["e_shstrndx"],) = struct.unpack(
                 self.formatDict["Elf32_Half_F"],
                 file.read(self.formatDict["Elf32_Half_S"]),
@@ -360,12 +383,13 @@ class ELF32(BinaryFile):
 
             # Iterate over the Elf32_Phdr structures
             for _idx in range(self.Elf32_Ehdr["e_phnum"]):
+                # Refresh Program Header Entry dictionary
                 _Elf32_Phdr = {}
+                # Read p_type and translate into name
                 (_Elf32_Phdr["p_type"],) = struct.unpack(
                     self.formatDict["Elf32_Word_F"],
                     file.read(self.formatDict["Elf32_Word_S"]),
                 )
-                # Translate type flag into name
                 if _Elf32_Phdr["p_type"] in E_PHDR_TYPE_DICT:
                     _Elf32_Phdr["p_typeName"] = E_PHDR_TYPE_DICT[_Elf32_Phdr["p_type"]]
                 elif (
@@ -378,31 +402,40 @@ class ELF32(BinaryFile):
                 ):
                     _Elf32_Phdr["p_typeName"] = "Processor Specific"
                 else:
-                    _Elf32_Phdr["p_typeName"] = "ERROR"
+                    _Elf32_Phdr[
+                        "p_typeName"
+                    ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
+                # Read p_offset
                 (_Elf32_Phdr["p_offset"],) = struct.unpack(
                     self.formatDict["Elf32_Off_F"],
                     file.read(self.formatDict["Elf32_Off_S"]),
                 )
+                # Read p_vaddr
                 (_Elf32_Phdr["p_vaddr"],) = struct.unpack(
                     self.formatDict["Elf32_Addr_F"],
                     file.read(self.formatDict["Elf32_Addr_S"]),
                 )
+                # Read p_paddr
                 (_Elf32_Phdr["p_paddr"],) = struct.unpack(
                     self.formatDict["Elf32_Addr_F"],
                     file.read(self.formatDict["Elf32_Addr_S"]),
                 )
+                # Read p_filesz
                 (_Elf32_Phdr["p_filesz"],) = struct.unpack(
                     self.formatDict["Elf32_Word_F"],
                     file.read(self.formatDict["Elf32_Word_S"]),
                 )
+                # Read p_memsz
                 (_Elf32_Phdr["p_memsz"],) = struct.unpack(
                     self.formatDict["Elf32_Word_F"],
                     file.read(self.formatDict["Elf32_Word_S"]),
                 )
+                # Read p_flags
                 (_Elf32_Phdr["p_flags"],) = struct.unpack(
                     self.formatDict["Elf32_Word_F"],
                     file.read(self.formatDict["Elf32_Word_S"]),
                 )
+                # Read p_align
                 (_Elf32_Phdr["p_align"],) = struct.unpack(
                     self.formatDict["Elf32_Word_F"],
                     file.read(self.formatDict["Elf32_Word_S"]),
