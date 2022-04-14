@@ -2,13 +2,40 @@
 Description: This file defines the ELF32 class inheriting from the BinaryFile class.
 """
 
-from platform import machine
 from BinaryFile import BinaryFile
 import struct
 
 
 E_MACHINE_OFFSET = 0x5
 E_IDENT_SIZE = 0x10
+EI_CLASS_DICT = {
+    b"\x01": "32-Bit",
+    b"\x02": "64-Bit",
+}
+EI_DATA_DICT = {
+    b"\x01": "Little Endian",
+    b"\x02": "Big Endian",
+}
+EI_OSABI_DICT = {
+    b"\x00": "System V",
+    b"\x01": "HP-UX",
+    b"\x02": "NetBSD",
+    b"\x03": "Linux",
+    b"\x04": "GNU Hurd",
+    b"\x06": "Solaris",
+    b"\x07": "AIX (Monterey)",
+    b"\x08": "IRIX",
+    b"\x09": "FreeBSD",
+    b"\x0A": "Tru64",
+    b"\x0B": "Novell Modesto",
+    b"\x0C": "OpenBSD",
+    b"\x0D": "OpenVMS",
+    b"\x0E": "NonStop Kernel",
+    b"\x0F": "AROS",
+    b"\x10": "FenixOS",
+    b"\x11": "Nuxi CloudABI",
+    b"\x12": "Stratus Technologies OpenVOS",
+}
 E_TYPE_DICT = {
     0x0000: "ET_NONE",
     0x0001: "ET_REL",
@@ -113,7 +140,13 @@ class ELF32(BinaryFile):
 
         print(
             f"ELF HEADER:\n"
-            + f"\te_ident Structure:\t\t{self.Elf32_Ehdr['e_ident']}\n"
+            + f"\te_ident Structure:\t\t{self.Elf32_Ehdr['e_ident'].hex(' ')}\n"
+            + f"\t\tMagic:\t\t\t{self.Elf32_Ehdr_e_ident['EI_MAG'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_MAG']})\n"
+            + f"\t\tClass (Bitness):\t{self.Elf32_Ehdr_e_ident['EI_CLASS'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_CLASSName']})\n"
+            + f"\t\tType (Endianness):\t{self.Elf32_Ehdr_e_ident['EI_DATA'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_DATAName']})\n"
+            + f"\t\tVersion:\t\t{self.Elf32_Ehdr_e_ident['EI_VERSION'].hex(' ')}\n"
+            + f"\t\tABI:\t\t\t{self.Elf32_Ehdr_e_ident['EI_OSABI'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_OSABIName']})\n"
+            + f"\t\tABI Version:\t\t{self.Elf32_Ehdr_e_ident['EI_ABIVERSION'].hex(' ')}\n"
             + f"\tType:\t\t\t\t{hex(self.Elf32_Ehdr['e_type'])} ({self.Elf32_Ehdr['e_typeName']})\n"
             + f"\tMachine:\t\t\t{hex(self.Elf32_Ehdr['e_machine'])} ({self.Elf32_Ehdr['e_machineName']})\n"
             + f"\tVersion:\t\t\t{self.Elf32_Ehdr['e_version']}\n"
@@ -201,7 +234,34 @@ class ELF32(BinaryFile):
             dict: a dictionary of data parsed from the e_ident structure (in ELF header)
         """
 
-        # TODO: Add in logic to parse the e_ident structure from the ELF header struct
+        e_ident = {}
+        with open(self.path, "rb") as file:
+            # Read magic characters
+            e_ident["EI_MAG"] = file.read(4)
+            # Read and translate EI_CLASS
+            e_ident["EI_CLASS"] = file.read(1)
+            if e_ident["EI_CLASS"] in EI_CLASS_DICT:
+                e_ident["EI_CLASSName"] = EI_CLASS_DICT[e_ident["EI_CLASS"]]
+            else:
+                e_ident["EI_CLASSName"] = "ERROR"
+            # Read and translate EI_DATA
+            e_ident["EI_DATA"] = file.read(1)
+            if e_ident["EI_DATA"] in EI_DATA_DICT:
+                e_ident["EI_DATAName"] = EI_DATA_DICT[e_ident["EI_DATA"]]
+            else:
+                e_ident["EI_DATAName"] = "ERROR"
+            # Read EI_VERSION
+            e_ident["EI_VERSION"] = file.read(1)
+            # Read and translate EI_OSABI
+            e_ident["EI_OSABI"] = file.read(1)
+            if e_ident["EI_OSABI"] in EI_OSABI_DICT:
+                e_ident["EI_OSABIName"] = EI_OSABI_DICT[e_ident["EI_OSABI"]]
+            else:
+                e_ident["EI_OSABIName"] = "ERROR"
+            # Read EI_ABIVERSION
+            e_ident["EI_ABIVERSION"] = file.read(1)
+
+            return e_ident
 
     def _read_Elf32_Ehdr(self) -> dict:
         """Parses information from the ELF Header (Elf32_Ehdr structure)
@@ -212,7 +272,7 @@ class ELF32(BinaryFile):
         _Elf32_Ehdr = {}
         with open(self.path, "rb") as file:
             # Jump past the e_ident data structure
-            file.seek(E_IDENT_SIZE)
+            _Elf32_Ehdr["e_ident"] = file.read(E_IDENT_SIZE)
 
             # Parse the data from the ELF Header
             (_Elf32_Ehdr["e_type"],) = struct.unpack(
