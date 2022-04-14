@@ -88,6 +88,53 @@ IMAGE_FILE_MACHINE_DICT = {
     0x0200: "IMAGE_FILE_MACHINE_IA64",
     0x8664: "IMAGE_FILE_MACHINE_AMD64",
 }
+IMAGE_SECTION_HEADER_TABLE_OFFSET = 0x108
+IMAGE_SIZEOF_SHORT_NAME = 0x8
+IMAGE_SECTION_HEADER_CHARACTERISTICS_DICT = {
+    # 0x00000000: "RESERVED",
+    # 0x00000001: "RESERVED",
+    # 0x00000002: "RESERVED",
+    # 0x00000004: "RESERVED",
+    0x00000008: "IMAGE_SCN_TYPE_NO_PAD",
+    # 0x00000010: "RESERVED",
+    0x00000020: "IMAGE_SCN_CNT_CODE",
+    0x00000040: "IMAGE_SCN_CNT_INITIALIZED_DATA",
+    0x00000080: "IMAGE_SCN_CNT_UNINITIALIZED_DATA",
+    0x00000100: "IMAGE_SCN_LNK_OTHER",
+    0x00000200: "IMAGE_SCN_LNK_INFO",
+    # 0x00000400: "RESERVED",
+    0x00000800: "IMAGE_SCN_LNK_REMOVE",
+    0x00001000: "IMAGE_SCN_LNK_COMDAT",
+    # 0x00002000: "RESERVED",
+    0x00004000: "IMAGE_SCN_NO_DEFER_SPEC_EXC",
+    0x00008000: "IMAGE_SCN_GPREL",
+    # 0x00010000: "RESERVED",
+    0x00020000: "IMAGE_SCN_MEM_PURGEABLE",
+    0x00040000: "IMAGE_SCN_MEM_LOCKED",
+    0x00080000: "IMAGE_SCN_MEM_PRELOAD",
+    # 0x00100000: "IMAGE_SCN_ALIGN_1BYTES",
+    # 0x00200000: "IMAGE_SCN_ALIGN_2BYTES",
+    # 0x00300000: "IMAGE_SCN_ALIGN_4BYTES",
+    # 0x00400000: "IMAGE_SCN_ALIGN_8BYTES",
+    # 0x00500000: "IMAGE_SCN_ALIGN_16BYTES",
+    # 0x00600000: "IMAGE_SCN_ALIGN_32BYTES",
+    # 0x00700000: "IMAGE_SCN_ALIGN_64BYTES",
+    # 0x00800000: "IMAGE_SCN_ALIGN_128BYTES",
+    # 0x00900000: "IMAGE_SCN_ALIGN_256BYTES",
+    # 0x00A00000: "IMAGE_SCN_ALIGN_512BYTES",
+    # 0x00B00000: "IMAGE_SCN_ALIGN_1024BYTES",
+    # 0x00C00000: "IMAGE_SCN_ALIGN_2048BYTES",
+    # 0x00D00000: "IMAGE_SCN_ALIGN_4096BYTES",
+    # 0x00E00000: "IMAGE_SCN_ALIGN_8192BYTES",
+    0x01000000: "IMAGE_SCN_LNK_NRELOC_OVFL",
+    0x02000000: "IMAGE_SCN_MEM_DISCARDABLE",
+    0x04000000: "IMAGE_SCN_MEM_NOT_CACHED",
+    0x08000000: "IMAGE_SCN_MEM_NOT_PAGED",
+    0x10000000: "IMAGE_SCN_MEM_SHARED",
+    0x20000000: "IMAGE_SCN_MEM_EXECUTE",
+    0x40000000: "IMAGE_SCN_MEM_READ",
+    0x80000000: "IMAGE_SCN_MEM_WRITE",
+}
 
 
 class PE32Plus(BinaryFile):
@@ -106,6 +153,7 @@ class PE32Plus(BinaryFile):
         self._IMAGE_FILE_HEADER = self._read_IMAGE_FILE_HEADER()
         self._IMAGE_OPTIONAL_HEADER = self._read_IMAGE_OPTIONAL_HEADER()
         self._IMAGE_DATA_DIRECTORY_TABLE = self._read_IMAGE_DATA_DIRECTORY_array()
+        self._IMAGE_SECTION_HEADER_TABLE = self._read_IMAGE_SECTION_HEADER_table()
 
     def print_file_type(self) -> None:
         """Display the file type of the provided binary file"""
@@ -193,6 +241,41 @@ class PE32Plus(BinaryFile):
             print(
                 f"    {DATA_DIRECTORY:<40}  {hex(infoDict['VirtualAddress'])} (Length: {hex(infoDict['Size'])})"
             )
+
+    def print_section_info(self) -> None:
+        """Prints the section header information parsed from the provided binary for the user to view"""
+
+        print(f"SECTION HEADERS (_IMAGE_SECTION_HEADER):\n")
+        for idx, _IMAGE_SECTION_HEADER in enumerate(self._IMAGE_SECTION_HEADER_TABLE):
+            print(
+                f"\tSection Header [{idx}]:\n"
+                + f"\t\tName:\t\t\t{_IMAGE_SECTION_HEADER['NameCharacters']}"
+            )
+            # Decide if Misc Holds Physical Address or Virtual Size
+            if _IMAGE_SECTION_HEADER["Misc"] == 0:
+                print(
+                    f"\t\tMisc.:\t\t\t{hex(_IMAGE_SECTION_HEADER['Misc'])} (Object File)"
+                )
+            elif (
+                _IMAGE_SECTION_HEADER["Misc"] <= _IMAGE_SECTION_HEADER["SizeOfRawData"]
+            ):
+                print(f"\t\tVirtual Size:\t\t{hex(_IMAGE_SECTION_HEADER['Misc'])}")
+            else:
+                print(f"\t\tMisc.:\t\t\tN/A ({hex(_IMAGE_SECTION_HEADER['Misc'])})")
+            print(
+                f"\t\tVirtual Address:\t{hex(_IMAGE_SECTION_HEADER['VirtualAddress'])}\n"
+                + f"\t\tRaw Size:\t\t{hex(_IMAGE_SECTION_HEADER['SizeOfRawData'])}\n"
+                + f"\t\tRaw Address:\t\t{hex(_IMAGE_SECTION_HEADER['PointerToRawData'])}\n"
+                + f"\t\tRelocations Address:\t{hex(_IMAGE_SECTION_HEADER['PointerToRelocations'])}\n"
+                + f"\t\tLine Numbers Address:\t{hex(_IMAGE_SECTION_HEADER['PointerToLinenumbers'])}\n"
+                + f"\t\tNumber of Relocations:\t{_IMAGE_SECTION_HEADER['NumberOfRelocations']}\n"
+                + f"\t\tLine Numbers:\t\t{_IMAGE_SECTION_HEADER['NumberOfLinenumbers']}\n"
+                + f"\t\tCharacteristics:\t{hex(_IMAGE_SECTION_HEADER['Characteristics'])}\n"
+                + f"\t\tList of Characteristics:"
+            )
+            for characteristic in _IMAGE_SECTION_HEADER["ListOfChars"]:
+                print(f"\t\t\t\t\t{characteristic}")
+        print("\n")
 
     def _find_endianess(self) -> None:
         """All windows PE formats are assumed to be compiled in Little Endian format"""
@@ -539,3 +622,85 @@ class PE32Plus(BinaryFile):
                     pass
 
             return _IMAGE_DATA_DIRECTORY_TABLE
+
+    def _read_IMAGE_SECTION_HEADER_table(self) -> list:
+        """Parses infromation from the section header table of _IMAGE_SECTION_HEADER structs
+
+        Returns:
+            list: a list of dictionaries containing information parsed from the existing section headers
+        """
+
+        # Jump to the beginning of the _IMAGE_SECTION_HEADER table
+        with open(self.path, "rb") as file:
+            file.seek(self._IMAGE_DOS_HEADER["e_lfanew"], 0)
+            file.seek(IMAGE_SECTION_HEADER_TABLE_OFFSET, 1)
+
+            # Initialize a list to hold the _IMAGE_SECTION_HEADER entries
+            _IMAGE_SECTION_HEADER_table = []
+
+            # Iterate through _IMAGE_SECTION_HEADER entries
+            for _idx in range(self._IMAGE_FILE_HEADER["NumberOfSections"]):
+
+                # Refresh the _IMAGE_SECTION_HEADER dictionary
+                _IMAGE_SECTION_HEADER = {}
+
+                # Read Name and translate to characters
+                _IMAGE_SECTION_HEADER["Name"] = file.read(IMAGE_SIZEOF_SHORT_NAME)
+                # nameCharacters = _IMAGE_SECTION_HEADER["Name"].to_bytes(
+                #     IMAGE_SIZEOF_SHORT_NAME, "little"
+                # )
+                _IMAGE_SECTION_HEADER["NameCharacters"] = _IMAGE_SECTION_HEADER[
+                    "Name"
+                ].decode("utf-8")
+                # Read Misc (union{Physical Address, Virtual Size})
+                (_IMAGE_SECTION_HEADER["Misc"],) = struct.unpack(
+                    self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+                )
+                # Read VirtualAddress
+                (_IMAGE_SECTION_HEADER["VirtualAddress"],) = struct.unpack(
+                    self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+                )
+                # Read SizeOfRawData
+                (_IMAGE_SECTION_HEADER["SizeOfRawData"],) = struct.unpack(
+                    self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+                )
+                # Read PointerToRawData
+                (_IMAGE_SECTION_HEADER["PointerToRawData"],) = struct.unpack(
+                    self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+                )
+                # Read PointerToRelocations
+                (_IMAGE_SECTION_HEADER["PointerToRelocations"],) = struct.unpack(
+                    self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+                )
+                # Read PointerToLinenumbers
+                (_IMAGE_SECTION_HEADER["PointerToLinenumbers"],) = struct.unpack(
+                    self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+                )
+                # Read NumberOfRelocations
+                (_IMAGE_SECTION_HEADER["NumberOfRelocations"],) = struct.unpack(
+                    self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
+                )
+                # Read NumberOfLinenumbers
+                (_IMAGE_SECTION_HEADER["NumberOfLinenumbers"],) = struct.unpack(
+                    self.formatDict["WORD_F"], file.read(self.formatDict["WORD_S"])
+                )
+                # Read Characteristics and translate
+                (_IMAGE_SECTION_HEADER["Characteristics"],) = struct.unpack(
+                    self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+                )
+                if _IMAGE_SECTION_HEADER["Characteristics"] != 0x0:
+                    # Initialize a list to store all parsed DLL characteristics
+                    _IMAGE_SECTION_HEADER["ListOfChars"] = []
+                    # Translate DLL Charachetistics value into a list of characteristics
+                    for charID in list(
+                        IMAGE_SECTION_HEADER_CHARACTERISTICS_DICT.keys()
+                    ):
+                        if _IMAGE_SECTION_HEADER["Characteristics"] & charID == charID:
+                            _IMAGE_SECTION_HEADER["ListOfChars"].append(
+                                IMAGE_SECTION_HEADER_CHARACTERISTICS_DICT[charID]
+                            )
+
+                # Append the Section Header entry to the list
+                _IMAGE_SECTION_HEADER_table.append(_IMAGE_SECTION_HEADER)
+
+            return _IMAGE_SECTION_HEADER_table
