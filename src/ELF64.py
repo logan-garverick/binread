@@ -115,6 +115,11 @@ PT_LOOS = 0x60000000
 PT_HIOS = 0x6FFFFFFF
 PT_LOPROC = 0x70000000
 PT_HIPROC = 0x7FFFFFFF
+E_PHDR_FLAGS_DICT = {
+    0x04: "R",
+    0x02: "W",
+    0x01: "X",
+}
 
 
 class ELF64(BinaryFile):
@@ -166,18 +171,26 @@ class ELF64(BinaryFile):
             + f"\tSection Name String Table:\t{hex(self.Elf64_Ehdr['e_shstrndx'])}\n"
         )
         # Print the data parsed from the program headers
-        for idx, Elf32_Phdr in enumerate(self.Elf64_Phdr_table):
+        for idx, Elf64_Phdr in enumerate(self.Elf64_Phdr_table):
             print(
                 f"PROGRAM HEADER [{idx}]:\n"
-                + f"\tType:\t\t\t\t{hex(Elf32_Phdr['p_type'])} ({Elf32_Phdr['p_typeName']})\n"
-                + f"\tSegment Dependent Flags:\t{hex(Elf32_Phdr['p_flags'])}\n"
-                + f"\tOffset:\t\t\t\t{hex(Elf32_Phdr['p_offset'])}\n"
-                + f"\tVirtual Address:\t\t{hex(Elf32_Phdr['p_vaddr'])}\n"
-                + f"\tPhysical Address:\t\t{hex(Elf32_Phdr['p_paddr'])}\n"
-                + f"\tPhysical Size:\t\t\t{hex(Elf32_Phdr['p_filesz'])}\n"
-                + f"\tVirtual Size:\t\t\t{hex(Elf32_Phdr['p_memsz'])}\n"
-                + f"\tAlignment:\t\t\t{hex(Elf32_Phdr['p_align'])}"
+                + f"\tType:\t\t\t\t{hex(Elf64_Phdr['p_type'])} ({Elf64_Phdr['p_typeName']})\n"
+                + f"\tFlags:\t\t\t\t{hex(Elf64_Phdr['p_flags'])}",
+                end="",
             )
+            if len(Elf64_Phdr["p_flags_list"]) != 0:
+                print(" (", end="")
+                for flag in Elf64_Phdr["p_flags_list"]:
+                    print(f"{flag}", end="")
+            print(
+                f")\n\tOffset:\t\t\t\t{hex(Elf64_Phdr['p_offset'])}\n"
+                + f"\tVirtual Address:\t\t{hex(Elf64_Phdr['p_vaddr'])}\n"
+                + f"\tPhysical Address:\t\t{hex(Elf64_Phdr['p_paddr'])}\n"
+                + f"\tPhysical Size:\t\t\t{hex(Elf64_Phdr['p_filesz'])}\n"
+                + f"\tVirtual Size:\t\t\t{hex(Elf64_Phdr['p_memsz'])}\n"
+                + f"\tAlignment:\t\t\t{hex(Elf64_Phdr['p_align'])}"
+            )
+            print("\n")
 
     def print_section_info(self) -> None:
         """Prints the section header information parsed from the provided binary for the user to view"""
@@ -423,6 +436,13 @@ class ELF64(BinaryFile):
                     self.formatDict["Elf64_Word_F"],
                     file.read(self.formatDict["Elf64_Word_S"]),
                 )
+                if _Elf64_Phdr["p_flags"] != 0x0:
+                    # Initialize a list to store parsed flags
+                    _Elf64_Phdr["p_flags_list"] = []
+                    # Translate flag values into a list of flags
+                    for flag in list(E_PHDR_FLAGS_DICT.keys()):
+                        if _Elf64_Phdr["p_flags"] & flag == flag:
+                            _Elf64_Phdr["p_flags_list"].append(E_PHDR_FLAGS_DICT[flag])
                 # Read p_offset
                 (_Elf64_Phdr["p_offset"],) = struct.unpack(
                     self.formatDict["Elf64_Off_F"],

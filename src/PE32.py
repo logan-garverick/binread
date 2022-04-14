@@ -697,7 +697,7 @@ class PE32(BinaryFile):
                 if _IMAGE_SECTION_HEADER["Characteristics"] != 0x0:
                     # Initialize a list to store all parsed DLL characteristics
                     _IMAGE_SECTION_HEADER["ListOfChars"] = []
-                    # Translate DLL Charachetistics value into a list of characteristics
+                    # Translate DLL Characteristics value into a list of characteristics
                     for charID in list(
                         IMAGE_SECTION_HEADER_CHARACTERISTICS_DICT.keys()
                     ):

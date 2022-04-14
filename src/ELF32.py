@@ -114,6 +114,48 @@ PT_LOOS = 0x60000000
 PT_HIOS = 0x6FFFFFFF
 PT_LOPROC = 0x70000000
 PT_HIPROC = 0x7FFFFFFF
+E_PHDR_FLAGS_DICT = {
+    0x04: "R",
+    0x02: "W",
+    0x01: "X",
+}
+E_SHDR_TYPE_DICT = {
+    0x00000000: "SHT_NULL",
+    0x00000001: "SHT_PROGBITS",
+    0x00000002: "SHT_SYMTAB",
+    0x00000003: "SHT_STRTAB",
+    0x00000004: "SHT_RELA",
+    0x00000005: "SHT_HASH",
+    0x00000006: "SHT_DYNAMIC",
+    0x00000007: "SHT_NOTE",
+    0x00000008: "SHT_NOBITS",
+    0x00000009: "SHT_REL",
+    0x0000000A: "SHT_SHLIB",
+    0x0000000B: "SHT_DYNSYM",
+    0x0000000E: "SHT_INIT_ARRAY",
+    0x0000000F: "SHT_FINI_ARRAY",
+    0x00000010: "SHT_PREINIT_ARRAY",
+    0x00000011: "SHT_GROUP",
+    0x00000012: "SHT_SYMTAB_SHNDX",
+    0x00000013: "SHT_NUM",
+}
+SHT_LOOS = 0x60000000
+E_SHDR_FLAGS_DICT = {
+    0x00000001: "SHF_WRITE",
+    0x00000002: "SHF_ALLOC",
+    0x00000004: "SHF_EXECINSTR",
+    0x00000010: "SHF_MERGE",
+    0x00000020: "SHF_STRINGS",
+    0x00000040: "SHF_INFO_LINK",
+    0x00000080: "SHF_LINK_ORDER",
+    0x00000100: "SHF_OS_NONCONFORMING",
+    0x00000200: "SHF_GROUP",
+    0x00000400: "SHF_TLS",
+    0x0FF00000: "SHF_MASKOS",
+    0xF0000000: "SHF_MASKPROC",
+    0x40000000: "SHF_ORDERED",
+    0x80000000: "SHF_EXCLUDE",
+}
 
 
 class ELF32(BinaryFile):
@@ -131,6 +173,7 @@ class ELF32(BinaryFile):
         self.Elf32_Ehdr_e_ident = self._read_Elf32_Ehdr_e_ident()
         self.Elf32_Ehdr = self._read_Elf32_Ehdr()
         self.Elf32_Phdr_table = self._read_Elf32_Phdr_table()
+        self.Elf32_Shdr_table = self._read_Elf32_Shdr_table()
 
     def print_file_type(self) -> None:
         """Display the file type of the provided binary file"""
@@ -174,9 +217,15 @@ class ELF32(BinaryFile):
                 + f"\tPhysical Address:\t\t{hex(Elf32_Phdr['p_paddr'])}\n"
                 + f"\tPhysical Size:\t\t\t{hex(Elf32_Phdr['p_filesz'])}\n"
                 + f"\tVirtual Size:\t\t\t{hex(Elf32_Phdr['p_memsz'])}\n"
-                + f"\tSegment Dependent Flags:\t{hex(Elf32_Phdr['p_flags'])}\n"
-                + f"\tAlignment:\t\t\t{hex(Elf32_Phdr['p_align'])}"
+                + f"\tFlags:\t\t\t\t{hex(Elf32_Phdr['p_flags'])}",
+                end="",
             )
+            if len(Elf32_Phdr["p_flags_list"]) != 0:
+                print(" (", end="")
+                for flag in Elf32_Phdr["p_flags_list"]:
+                    print(f"{flag}", end="")
+            print(f")\n\tAlignment:\t\t\t{hex(Elf32_Phdr['p_align'])}")
+            print("\n")
 
     def print_section_info(self) -> None:
         """Prints the section header information parsed from the provided binary for the user to view"""
@@ -380,7 +429,7 @@ class ELF32(BinaryFile):
         with open(self.path, "rb") as file:
 
             # Jump to the beginning of the program header table
-            file.seek(self.Elf32_Ehdr["e_ehsize"], 0)
+            file.seek(self.Elf32_Ehdr["e_phoff"], 0)
 
             # Initialize a list to hold parsed data from program header entries
             _Elf32_Phdr_table = []
@@ -434,11 +483,18 @@ class ELF32(BinaryFile):
                     self.formatDict["Elf32_Word_F"],
                     file.read(self.formatDict["Elf32_Word_S"]),
                 )
-                # Read p_flags
+                # Read p_flags and translate
                 (_Elf32_Phdr["p_flags"],) = struct.unpack(
                     self.formatDict["Elf32_Word_F"],
                     file.read(self.formatDict["Elf32_Word_S"]),
                 )
+                if _Elf32_Phdr["p_flags"] != 0x0:
+                    # Initialize a list to store parsed flags
+                    _Elf32_Phdr["p_flags_list"] = []
+                    # Translate flag values into a list of flags
+                    for flag in list(E_PHDR_FLAGS_DICT.keys()):
+                        if _Elf32_Phdr["p_flags"] & flag == flag:
+                            _Elf32_Phdr["p_flags_list"].append(E_PHDR_FLAGS_DICT[flag])
                 # Read p_align
                 (_Elf32_Phdr["p_align"],) = struct.unpack(
                     self.formatDict["Elf32_Word_F"],
@@ -449,3 +505,93 @@ class ELF32(BinaryFile):
                 _Elf32_Phdr_table.append(_Elf32_Phdr)
 
             return _Elf32_Phdr_table
+
+    def _read_Elf32_Shdr_table(self) -> list:
+        """Parses information from the Section Headers (Elf32_Shdr structures)
+
+        Returns:
+            list: a list of dictionaries of data parsed from the section header
+        """
+        # Jump to the beginning of the section header table
+        with open(self.path, "rb") as file:
+            file.seek(self.Elf32_Ehdr["e_shoff"], 0)
+
+            # Initialize a list to hold the Elf32_Shdr entries
+            Elf32_Shdr_table = []
+
+            # Iterate through _IMAGE_SECTION_HEADER entries
+            for _idx in range(self.Elf32_Ehdr["e_shnum"]):
+
+                # Refresh the Elf32_Shdr dictionary
+                Elf32_Shdr = {}
+
+                # Read sh_name string table index
+                (Elf32_Shdr["sh_nameIdx"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_type and translate
+                (Elf32_Shdr["sh_type"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                if Elf32_Shdr["sh_type"] in E_SHDR_TYPE_DICT:
+                    Elf32_Shdr["sh_typeName"] = E_SHDR_TYPE_DICT[Elf32_Shdr["sh_type"]]
+                elif Elf32_Shdr["sh_type"] >= SHT_LOOS:
+                    Elf32_Shdr["sh_typeName"] = "Operating System Specific"
+                else:
+                    Elf32_Shdr[
+                        "sh_typeName"
+                    ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
+                # Read sh_flags and translate
+                (Elf32_Shdr["sh_flags"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                if Elf32_Shdr["sh_flags"] != 0x0:
+                    # Initialize a list to store parsed flags
+                    Elf32_Shdr["sh_flags_list"] = []
+                    # Translate flag values into a list of flags
+                    for flag in list(E_SHDR_FLAGS_DICT.keys()):
+                        if Elf32_Shdr["sh_flags"] & flag == flag:
+                            Elf32_Shdr["sh_flags_list"].append(E_SHDR_FLAGS_DICT[flag])
+                # Read sh_addr
+                (Elf32_Shdr["sh_addr"],) = struct.unpack(
+                    self.formatDict["Elf32_Addr_F"],
+                    file.read(self.formatDict["Elf32_Addr_S"]),
+                )
+                # Read sh_offset
+                (Elf32_Shdr["sh_offset"],) = struct.unpack(
+                    self.formatDict["Elf32_Off_F"],
+                    file.read(self.formatDict["Elf32_Off_S"]),
+                )
+                # Read sh_size
+                (Elf32_Shdr["sh_size"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_link
+                (Elf32_Shdr["sh_link"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_info
+                (Elf32_Shdr["sh_info"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_addralign
+                (Elf32_Shdr["sh_addralign"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_entsize
+                (Elf32_Shdr["sh_entsize"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+
+                # Append the Section Header entry to the list
+                Elf32_Shdr_table.append(Elf32_Shdr)
+
+            return Elf32_Shdr_table
