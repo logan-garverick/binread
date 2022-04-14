@@ -84,6 +84,7 @@ def binread() -> None:
     binary = get_BinaryFile_from_path(args.BINARY)
     binary.print_file_type()
     binary.print_header_info()
+    binary.print_section_info()
 
 
 if __name__ == "__main__":

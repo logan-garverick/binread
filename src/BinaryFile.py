@@ -20,3 +20,7 @@ class BinaryFile:
     @abstractmethod
     def print_header_info(self) -> None:
         """Displays the information parsed from the provided binary file's headers"""
+
+    @abstractmethod
+    def print_section_info(self) -> None:
+        """Displays the information parsed from the provided binary file's section headers"""
