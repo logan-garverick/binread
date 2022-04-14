@@ -106,6 +106,10 @@ class PE32(BinaryFile):
         self._IMAGE_OPTIONAL_HEADER = self._read_IMAGE_OPTIONAL_HEADER()
         self._IMAGE_DATA_DIRECTORY_TABLE = self._read_IMAGE_DATA_DIRECTORY_array()
 
+    def print_file_type(self) -> None:
+        """Display the file type of the provided binary file"""
+        print(f"Windows Portable Executable, 32-bit Addressable (PE32)\n")
+
     def print_header_info(self) -> None:
         """Prints the header information parsed from the provided binary for the user to view"""
 

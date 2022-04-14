@@ -29,6 +29,19 @@
                 "${workspaceFolder}/examples/hello_pe32+.exe"
             ],
             "justMyCode": true
+        },
+        {
+            "name": "32-bit ELF",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-a",
+                "${workspaceFolder}/examples/hello_elf32"
+            ],
+            "justMyCode": true
         }
     ]
 }
