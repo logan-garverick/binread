@@ -277,7 +277,7 @@ class PE32(BinaryFile):
             )
             for characteristic in _IMAGE_SECTION_HEADER["ListOfChars"]:
                 print(f"\t\t\t\t\t{characteristic}")
-        print("\n")
+        print("\n", end="")
 
     def _find_endianess(self) -> None:
         """All windows PE formats are assumed to be compiled in Little Endian format"""
