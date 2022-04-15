@@ -149,33 +149,34 @@ class ELF64(BinaryFile):
 
         print(
             f"ELF HEADER:\n"
-            + f"\te_ident Structure:\t\t{self.Elf64_Ehdr['e_ident'].hex(' ')}\n"
-            + f"\t\tMagic:\t\t\t{self.Elf64_Ehdr_e_ident['EI_MAG'].hex(' ')} ({self.Elf64_Ehdr_e_ident['EI_MAG']})\n"
-            + f"\t\tClass (Bitness):\t{self.Elf64_Ehdr_e_ident['EI_CLASS'].hex(' ')} ({self.Elf64_Ehdr_e_ident['EI_CLASSName']})\n"
-            + f"\t\tType (Endianness):\t{self.Elf64_Ehdr_e_ident['EI_DATA'].hex(' ')} ({self.Elf64_Ehdr_e_ident['EI_DATAName']})\n"
-            + f"\t\tVersion:\t\t{self.Elf64_Ehdr_e_ident['EI_VERSION'].hex(' ')}\n"
-            + f"\t\tABI:\t\t\t{self.Elf64_Ehdr_e_ident['EI_OSABI'].hex(' ')} ({self.Elf64_Ehdr_e_ident['EI_OSABIName']})\n"
-            + f"\t\tABI Version:\t\t{self.Elf64_Ehdr_e_ident['EI_ABIVERSION'].hex(' ')}\n"
-            + f"\tType:\t\t\t\t{hex(self.Elf64_Ehdr['e_type'])} ({self.Elf64_Ehdr['e_typeName']})\n"
-            + f"\tMachine:\t\t\t{hex(self.Elf64_Ehdr['e_machine'])} ({self.Elf64_Ehdr['e_machineName']})\n"
-            + f"\tVersion:\t\t\t{self.Elf64_Ehdr['e_version']}\n"
-            + f"\tEntry Point:\t\t\t{hex(self.Elf64_Ehdr['e_entry'])}\n"
-            + f"\tProgram Header Offset:\t\t{hex(self.Elf64_Ehdr['e_phoff'])}\n"
-            + f"\tSection Header Offset:\t\t{hex(self.Elf64_Ehdr['e_shoff'])}\n"
-            + f"\tArchitecture Specific Flags:\t{hex(self.Elf64_Ehdr['e_flags'])}\n"
-            + f"\tELF Header Size:\t\t{hex(self.Elf64_Ehdr['e_ehsize'])}\n"
-            + f"\tProgram Header Entry Size:\t{hex(self.Elf64_Ehdr['e_phentsize'])}\n"
-            + f"\tNumber of Program Headers:\t{self.Elf64_Ehdr['e_phnum']}\n"
-            + f"\tSection Header Entry Size:\t{hex(self.Elf64_Ehdr['e_shentsize'])}\n"
-            + f"\tNumber of Section Headers:\t{self.Elf64_Ehdr['e_shnum']}\n"
-            + f"\tSection Name String Table:\t{hex(self.Elf64_Ehdr['e_shstrndx'])}\n"
+            + f"\te_ident Structure:\t\t\t{self.Elf64_Ehdr['e_ident'].hex(' ')}\n"
+            + f"\t\tMagic:\t\t\t\t{self.Elf64_Ehdr_e_ident['EI_MAG'].hex(' ')} ({self.Elf64_Ehdr_e_ident['EI_MAG']})\n"
+            + f"\t\tClass (Bitness):\t\t{self.Elf64_Ehdr_e_ident['EI_CLASS'].hex(' ')} ({self.Elf64_Ehdr_e_ident['EI_CLASSName']})\n"
+            + f"\t\tType (Endianness):\t\t{self.Elf64_Ehdr_e_ident['EI_DATA'].hex(' ')} ({self.Elf64_Ehdr_e_ident['EI_DATAName']})\n"
+            + f"\t\tVersion:\t\t\t{self.Elf64_Ehdr_e_ident['EI_VERSION'].hex(' ')}\n"
+            + f"\t\tABI:\t\t\t\t{self.Elf64_Ehdr_e_ident['EI_OSABI'].hex(' ')} ({self.Elf64_Ehdr_e_ident['EI_OSABIName']})\n"
+            + f"\t\tABI Version:\t\t\t{self.Elf64_Ehdr_e_ident['EI_ABIVERSION'].hex(' ')}\n"
+            + f"\tType:\t\t\t\t\t{hex(self.Elf64_Ehdr['e_type'])} ({self.Elf64_Ehdr['e_typeName']})\n"
+            + f"\tMachine:\t\t\t\t{hex(self.Elf64_Ehdr['e_machine'])} ({self.Elf64_Ehdr['e_machineName']})\n"
+            + f"\tVersion:\t\t\t\t{self.Elf64_Ehdr['e_version']}\n"
+            + f"\tEntry Point:\t\t\t\t{hex(self.Elf64_Ehdr['e_entry'])}\n"
+            + f"\tProgram Header Offset:\t\t\t{hex(self.Elf64_Ehdr['e_phoff'])}\n"
+            + f"\tSection Header Offset:\t\t\t{hex(self.Elf64_Ehdr['e_shoff'])}\n"
+            + f"\tArchitecture Specific Flags:\t\t{hex(self.Elf64_Ehdr['e_flags'])}\n"
+            + f"\tELF Header Size:\t\t\t{hex(self.Elf64_Ehdr['e_ehsize'])}\n"
+            + f"\tProgram Header Entry Size:\t\t{hex(self.Elf64_Ehdr['e_phentsize'])}\n"
+            + f"\tNumber of Program Headers:\t\t{self.Elf64_Ehdr['e_phnum']}\n"
+            + f"\tSection Header Entry Size:\t\t{hex(self.Elf64_Ehdr['e_shentsize'])}\n"
+            + f"\tNumber of Section Headers:\t\t{self.Elf64_Ehdr['e_shnum']}\n"
+            + f"\tSection Name String Table:\t\t{hex(self.Elf64_Ehdr['e_shstrndx'])}\n"
         )
         # Print the data parsed from the program headers
+        print(f"PROGRAM HEADERS:")
         for idx, Elf64_Phdr in enumerate(self.Elf64_Phdr_table):
             print(
-                f"PROGRAM HEADER [{idx}]:\n"
-                + f"\tType:\t\t\t\t{hex(Elf64_Phdr['p_type'])} ({Elf64_Phdr['p_typeName']})\n"
-                + f"\tFlags:\t\t\t\t{hex(Elf64_Phdr['p_flags'])}",
+                f"\tPROGRAM HEADER [{idx}]:\n"
+                + f"\t\tType:\t\t\t\t{hex(Elf64_Phdr['p_type'])} ({Elf64_Phdr['p_typeName']})\n"
+                + f"\t\tFlags:\t\t\t\t{hex(Elf64_Phdr['p_flags'])}",
                 end="",
             )
             if len(Elf64_Phdr["p_flags_list"]) != 0:
@@ -183,14 +184,14 @@ class ELF64(BinaryFile):
                 for flag in Elf64_Phdr["p_flags_list"]:
                     print(f"{flag}", end="")
             print(
-                f")\n\tOffset:\t\t\t\t{hex(Elf64_Phdr['p_offset'])}\n"
-                + f"\tVirtual Address:\t\t{hex(Elf64_Phdr['p_vaddr'])}\n"
-                + f"\tPhysical Address:\t\t{hex(Elf64_Phdr['p_paddr'])}\n"
-                + f"\tPhysical Size:\t\t\t{hex(Elf64_Phdr['p_filesz'])}\n"
-                + f"\tVirtual Size:\t\t\t{hex(Elf64_Phdr['p_memsz'])}\n"
-                + f"\tAlignment:\t\t\t{hex(Elf64_Phdr['p_align'])}"
+                f")\n\t\tOffset:\t\t\t\t{hex(Elf64_Phdr['p_offset'])}\n"
+                + f"\t\tVirtual Address:\t\t{hex(Elf64_Phdr['p_vaddr'])}\n"
+                + f"\t\tPhysical Address:\t\t{hex(Elf64_Phdr['p_paddr'])}\n"
+                + f"\t\tPhysical Size:\t\t\t{hex(Elf64_Phdr['p_filesz'])}\n"
+                + f"\t\tVirtual Size:\t\t\t{hex(Elf64_Phdr['p_memsz'])}\n"
+                + f"\t\tAlignment:\t\t\t{hex(Elf64_Phdr['p_align'])}"
             )
-            print("\n")
+        print("\n", end="")
 
     def print_section_info(self) -> None:
         """Prints the section header information parsed from the provided binary for the user to view"""

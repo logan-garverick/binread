@@ -186,50 +186,74 @@ class ELF32(BinaryFile):
 
         print(
             f"ELF HEADER:\n"
-            + f"\te_ident Structure:\t\t{self.Elf32_Ehdr['e_ident'].hex(' ')}\n"
-            + f"\t\tMagic:\t\t\t{self.Elf32_Ehdr_e_ident['EI_MAG'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_MAG']})\n"
-            + f"\t\tClass (Bitness):\t{self.Elf32_Ehdr_e_ident['EI_CLASS'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_CLASSName']})\n"
-            + f"\t\tType (Endianness):\t{self.Elf32_Ehdr_e_ident['EI_DATA'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_DATAName']})\n"
-            + f"\t\tVersion:\t\t{self.Elf32_Ehdr_e_ident['EI_VERSION'].hex(' ')}\n"
-            + f"\t\tABI:\t\t\t{self.Elf32_Ehdr_e_ident['EI_OSABI'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_OSABIName']})\n"
-            + f"\t\tABI Version:\t\t{self.Elf32_Ehdr_e_ident['EI_ABIVERSION'].hex(' ')}\n"
-            + f"\tType:\t\t\t\t{hex(self.Elf32_Ehdr['e_type'])} ({self.Elf32_Ehdr['e_typeName']})\n"
-            + f"\tMachine:\t\t\t{hex(self.Elf32_Ehdr['e_machine'])} ({self.Elf32_Ehdr['e_machineName']})\n"
-            + f"\tVersion:\t\t\t{self.Elf32_Ehdr['e_version']}\n"
-            + f"\tEntry Point:\t\t\t{hex(self.Elf32_Ehdr['e_entry'])}\n"
-            + f"\tProgram Header Offset:\t\t{hex(self.Elf32_Ehdr['e_phoff'])}\n"
-            + f"\tSection Header Offset:\t\t{hex(self.Elf32_Ehdr['e_shoff'])}\n"
-            + f"\tArchitecture Specific Flags:\t{hex(self.Elf32_Ehdr['e_flags'])}\n"
-            + f"\tELF Header Size:\t\t{hex(self.Elf32_Ehdr['e_ehsize'])}\n"
-            + f"\tProgram Header Entry Size:\t{hex(self.Elf32_Ehdr['e_phentsize'])}\n"
-            + f"\tNumber of Program Headers:\t{self.Elf32_Ehdr['e_phnum']}\n"
-            + f"\tSection Header Entry Size:\t{hex(self.Elf32_Ehdr['e_shentsize'])}\n"
-            + f"\tNumber of Section Headers:\t{self.Elf32_Ehdr['e_shnum']}\n"
-            + f"\tSection Name String Table:\t{hex(self.Elf32_Ehdr['e_shstrndx'])}\n"
+            + f"\te_ident Structure:\t\t\t{self.Elf32_Ehdr['e_ident'].hex(' ')}\n"
+            + f"\t\tMagic:\t\t\t\t{self.Elf32_Ehdr_e_ident['EI_MAG'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_MAG']})\n"
+            + f"\t\tClass (Bitness):\t\t{self.Elf32_Ehdr_e_ident['EI_CLASS'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_CLASSName']})\n"
+            + f"\t\tType (Endianness):\t\t{self.Elf32_Ehdr_e_ident['EI_DATA'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_DATAName']})\n"
+            + f"\t\tVersion:\t\t\t{self.Elf32_Ehdr_e_ident['EI_VERSION'].hex(' ')}\n"
+            + f"\t\tABI:\t\t\t\t{self.Elf32_Ehdr_e_ident['EI_OSABI'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_OSABIName']})\n"
+            + f"\t\tABI Version:\t\t\t{self.Elf32_Ehdr_e_ident['EI_ABIVERSION'].hex(' ')}\n"
+            + f"\tType:\t\t\t\t\t{hex(self.Elf32_Ehdr['e_type'])} ({self.Elf32_Ehdr['e_typeName']})\n"
+            + f"\tMachine:\t\t\t\t{hex(self.Elf32_Ehdr['e_machine'])} ({self.Elf32_Ehdr['e_machineName']})\n"
+            + f"\tVersion:\t\t\t\t{self.Elf32_Ehdr['e_version']}\n"
+            + f"\tEntry Point:\t\t\t\t{hex(self.Elf32_Ehdr['e_entry'])}\n"
+            + f"\tProgram Header Offset:\t\t\t{hex(self.Elf32_Ehdr['e_phoff'])}\n"
+            + f"\tSection Header Offset:\t\t\t{hex(self.Elf32_Ehdr['e_shoff'])}\n"
+            + f"\tArchitecture Specific Flags:\t\t{hex(self.Elf32_Ehdr['e_flags'])}\n"
+            + f"\tELF Header Size:\t\t\t{hex(self.Elf32_Ehdr['e_ehsize'])}\n"
+            + f"\tProgram Header Entry Size:\t\t{hex(self.Elf32_Ehdr['e_phentsize'])}\n"
+            + f"\tNumber of Program Headers:\t\t{self.Elf32_Ehdr['e_phnum']}\n"
+            + f"\tSection Header Entry Size:\t\t{hex(self.Elf32_Ehdr['e_shentsize'])}\n"
+            + f"\tNumber of Section Headers:\t\t{self.Elf32_Ehdr['e_shnum']}\n"
+            + f"\tSection Name String Table:\t\t{hex(self.Elf32_Ehdr['e_shstrndx'])}\n"
         )
         # Print the data parsed from the program headers
+        print(f"PROGRAM HEADERS:")
         for idx, Elf32_Phdr in enumerate(self.Elf32_Phdr_table):
             print(
-                f"PROGRAM HEADER [{idx}]:\n"
-                + f"\tType:\t\t\t\t{hex(Elf32_Phdr['p_type'])} ({Elf32_Phdr['p_typeName']})\n"
-                + f"\tOffset:\t\t\t\t{hex(Elf32_Phdr['p_offset'])}\n"
-                + f"\tVirtual Address:\t\t{hex(Elf32_Phdr['p_vaddr'])}\n"
-                + f"\tPhysical Address:\t\t{hex(Elf32_Phdr['p_paddr'])}\n"
-                + f"\tPhysical Size:\t\t\t{hex(Elf32_Phdr['p_filesz'])}\n"
-                + f"\tVirtual Size:\t\t\t{hex(Elf32_Phdr['p_memsz'])}\n"
-                + f"\tFlags:\t\t\t\t{hex(Elf32_Phdr['p_flags'])}",
+                f"\tPROGRAM HEADER [{idx}]:\n"
+                + f"\t\tType:\t\t\t\t{hex(Elf32_Phdr['p_type'])} ({Elf32_Phdr['p_typeName']})\n"
+                + f"\t\tOffset:\t\t\t\t{hex(Elf32_Phdr['p_offset'])}\n"
+                + f"\t\tVirtual Address:\t\t{hex(Elf32_Phdr['p_vaddr'])}\n"
+                + f"\t\tPhysical Address:\t\t{hex(Elf32_Phdr['p_paddr'])}\n"
+                + f"\t\tPhysical Size:\t\t\t{hex(Elf32_Phdr['p_filesz'])}\n"
+                + f"\t\tVirtual Size:\t\t\t{hex(Elf32_Phdr['p_memsz'])}\n"
+                + f"\t\tFlags:\t\t\t\t{hex(Elf32_Phdr['p_flags'])}",
                 end="",
             )
             if len(Elf32_Phdr["p_flags_list"]) != 0:
                 print(" (", end="")
                 for flag in Elf32_Phdr["p_flags_list"]:
                     print(f"{flag}", end="")
-            print(f")\n\tAlignment:\t\t\t{hex(Elf32_Phdr['p_align'])}")
-            print("\n")
+            print(f")\n\t\tAlignment:\t\t\t{hex(Elf32_Phdr['p_align'])}")
+        print("\n", end="")
 
     def print_section_info(self) -> None:
         """Prints the section header information parsed from the provided binary for the user to view"""
-        pass
+
+        print(f"SECTION HEADERS:")
+        for idx, Elf32_Shdr in enumerate(self.Elf32_Shdr_table):
+            print(
+                f"\tSECTION HEADER [{idx}]:\n"
+                + f"\t\tSection Name:\t\t\t{Elf32_Shdr['sh_nameStr']} (.shstrtab Index: {hex(Elf32_Shdr['sh_nameIdx'])})\n"
+                + f"\t\tType:\t\t\t\t{hex(Elf32_Shdr['sh_type'])} ({Elf32_Shdr['sh_typeName']})\n"
+                + f"\t\tFlags:\t\t\t\t{hex(Elf32_Shdr['sh_flags'])}",
+                end="",
+            )
+            if Elf32_Shdr["sh_flags"] != 0:
+                print(f" ({', '.join(Elf32_Shdr['sh_flags_list'])})")
+            else:
+                print(f" (N/A)")
+            print(
+                f"\t\tVirtual Address:\t\t{hex(Elf32_Shdr['sh_addr'])}\n"
+                + f"\t\tPhysical Address:\t\t{hex(Elf32_Shdr['sh_offset'])}\n"
+                + f"\t\tPhysical Size:\t\t\t{hex(Elf32_Shdr['sh_size'])}\n"
+                + f"\t\tLink:\t\t\t\t{hex(Elf32_Shdr['sh_link'])}\n"
+                + f"\t\tInfo (Section Specific):\t{hex(Elf32_Shdr['sh_info'])}\n"
+                + f"\t\tAlignment:\t\t\t{hex(Elf32_Shdr['sh_addralign'])}\n"
+                + f"\t\tLink:\t\t\t\t{hex(Elf32_Shdr['sh_link'])}"
+            )
+        print("\n", end="")
 
     def _find_endianess(self) -> None:
         """ELF files contain a flag in the file header which denotes the endianness of the file"""
@@ -594,4 +618,58 @@ class ELF32(BinaryFile):
                 # Append the Section Header entry to the list
                 Elf32_Shdr_table.append(Elf32_Shdr)
 
+            # Retrieve the file offset of the .shstrtab section
+            shstrtab_base = self._read_shstrtab_offset(Elf32_Shdr_table)
+            # Translate the .shstrtab name indexes into name strings
+            self._convert_shstrtab_idx_to_name(shstrtab_base, Elf32_Shdr_table)
+
             return Elf32_Shdr_table
+
+    def _read_shstrtab_offset(self, Elf32_Shdr_table) -> int:
+        """Retrieves the offset of the .shstrtab section which contains null terminated names of sections
+
+        Args:
+            Elf32_Shdr_table (list): a list of dictionaries of data parsed from the section headers
+
+        Returns:
+            int: file offset of the .shstrtab section in the file
+        """
+        # Retrieve the section header entry for .shstrtab
+        Elf32_Shdr_shstrtab = Elf32_Shdr_table[self.Elf32_Ehdr["e_shstrndx"]]
+        # Return the offset of the retrieved section
+        return Elf32_Shdr_shstrtab["sh_offset"]
+
+    def _convert_shstrtab_idx_to_name(self, shstrtab_base, Elf32_Shdr_table) -> None:
+        """Converts an index (offset) in the .shstrtab section into the corresponding string
+
+        Args:
+            shstrtab_base (int): file offset of the .shstrtab section in the file
+            Elf32_Shdr_table (list): a list of dictionaries of data parsed from the section headers
+        """
+
+        # Iterate through parsed section headers and convert .shstrtab index to name string
+        for Elf32_Shdr in Elf32_Shdr_table:
+            # Retrieve the .shstrtab index from Elf32_Shdr
+            shstrtab_idx = Elf32_Shdr["sh_nameIdx"]
+            # Retrieve name string from .shstrtab section
+            Elf32_Shdr["sh_nameStr"] = self._read_string_from_offset(
+                shstrtab_base + shstrtab_idx
+            )
+
+    def _read_string_from_offset(self, stringOffset) -> str:
+        """Parses the null terminated string starting at the provided address
+
+        Args:
+            stringOffset (int): file address of string to read
+
+        Returns:
+            str: null terminated string parsed from provided address
+        """
+
+        with open(self.path, "rb") as file:
+            # Jump to provided offset of string
+            file.seek(stringOffset)
+            # Read character-by-character until null terminator
+            parsedString = "".join(iter(lambda: file.read(1).decode("ascii"), "\x00"))
+            # Return the parsed string
+            return parsedString
