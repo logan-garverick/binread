@@ -154,6 +154,7 @@ class PE32Plus(BinaryFile):
         self._IMAGE_OPTIONAL_HEADER = self._read_IMAGE_OPTIONAL_HEADER()
         self._IMAGE_DATA_DIRECTORY_TABLE = self._read_IMAGE_DATA_DIRECTORY_array()
         self._IMAGE_SECTION_HEADER_TABLE = self._read_IMAGE_SECTION_HEADER_table()
+        self._IMAGE_IMPORT_DESCRIPTOR_DLLS = self._read_IMAGE_IMPORT_DESCRIPTORs()
 
     def print_file_type(self) -> None:
         """Display the file type of the provided binary file"""
@@ -241,6 +242,19 @@ class PE32Plus(BinaryFile):
             print(
                 f"    {DATA_DIRECTORY:<40}  {hex(infoDict['VirtualAddress'])} (Length: {hex(infoDict['Size'])})"
             )
+        print("\n", end="")
+        # Display the imported DLLs and associated functions (if any exist)
+        if self._IMAGE_IMPORT_DESCRIPTOR_DLLS != None:
+            print(f"IMPORTED DLLS:")
+            for DLL in self._IMAGE_IMPORT_DESCRIPTOR_DLLS:
+                print(f"\t{DLL['Name']}:")
+                # If there are functions imported from the DLL, display them
+                if len(DLL["ListOfFunctions"]) != 0:
+                    for importedFunction in DLL["ListOfFunctions"]:
+                        print(f"\t\t{importedFunction}")
+                else:
+                    print(f"No functions imported.")
+            print("\n", end="")
 
     def print_section_info(self) -> None:
         """Prints the section header information parsed from the provided binary for the user to view"""
@@ -704,3 +718,146 @@ class PE32Plus(BinaryFile):
                 _IMAGE_SECTION_HEADER_table.append(_IMAGE_SECTION_HEADER)
 
             return _IMAGE_SECTION_HEADER_table
+
+    def _read_IMAGE_IMPORT_DESCRIPTORs(self) -> list:
+
+        # Verify that IMAGE_DIRECTORY_ENTRY_IMPORT is contained in _IMAGE_DATA_DIRECTORY_TABLE
+        if "IMAGE_DIRECTORY_ENTRY_IMPORT" not in list(
+            self._IMAGE_DATA_DIRECTORY_TABLE.keys()
+        ):
+            return None
+        else:
+            IMAGE_DIRECTORY_ENTRY_IMPORT = self._IMAGE_DATA_DIRECTORY_TABLE[
+                "IMAGE_DIRECTORY_ENTRY_IMPORT"
+            ]
+
+        # Convert the RVA of the data dictionary to a file offset
+        IMAGE_DIRECTORY_ENTRY_IMPORT_FILEOFF = self._rva_to_offset(
+            IMAGE_DIRECTORY_ENTRY_IMPORT["VirtualAddress"]
+        )
+
+        # Initialize a list to store the parsed DLL information
+        dlls = []
+
+        with open(self.path, "rb") as file:
+            # Jump to the first _IMAGE_IMPORT_DESCRIPTOR struct
+            file.seek(IMAGE_DIRECTORY_ENTRY_IMPORT_FILEOFF, 0)
+
+            # Parse _IMAGE_IMPORT_DESCRIPTOR structs until terminating NULL struct is found
+            while True:
+                # Initialize a new dictionary entry for imported DLL
+                dll = {}
+
+                # Jump to Name in _IMAGE_IMPORT_DESCRIPTOR struct
+                file.seek(0x0C, 1)
+
+                # Parse information from _IMAGE_IMPORT_DESCRIPTOR struct
+                (namePointer,) = struct.unpack(
+                    self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+                )
+                (firstThunkPointer,) = struct.unpack(
+                    self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])
+                )
+
+                # Exit if the terminating NULL struct is found
+                if namePointer == 0 and firstThunkPointer == 0:
+                    break
+
+                # Convert namePointer from rva to file offset
+                namePointer_FILEOFF = self._rva_to_offset(namePointer)
+                # Read DLL name from namePointer file offset
+                dll["Name"] = self._read_string_from_offset(namePointer_FILEOFF)
+                # Convert firstThunkPointer from rva to file offset
+                firstThunkPointer_FILEOFF = self._rva_to_offset(firstThunkPointer)
+                dll["ListOfFunctions"] = self._read_IMAGE_THUNK_DATA_entries(
+                    firstThunkPointer_FILEOFF
+                )
+
+                # Append the parsed DLL information to the list of imported DLLs
+                dlls.append(dll)
+
+            # Return the list of imported DLLs
+            return dlls
+
+    def _read_IMAGE_THUNK_DATA_entries(self, firstThunkPointer) -> list:
+        """Parses infromation from the _IMAGE_THUNK_DATA structures pointed to by firstThunkPointer
+
+        Args:
+            firstThunkPointer (int): file offset to the beginning of a list of _IMAGE_THUNK_DATA structs
+
+        Returns:
+            list: a list of function names cathers from the list of _IMAGE_THUNK_DATA structs
+        """
+
+        # Initialize a list to store the parsed function names
+        functions = []
+
+        # Jump to provided offset of the first _IMAGE_THUNK_DATA struct
+        with open(self.path, "rb") as file:
+            file.seek(firstThunkPointer, 0)
+
+            # Iterate over _IMAGE_THUNK_DATA structs and collect function names
+            while True:
+                # Read the pointer to the function name
+                (functionNamePointer,) = struct.unpack(
+                    self.formatDict["QWORD_F"], file.read(self.formatDict["QWORD_S"])
+                )
+
+                # Check for the terminating NULL entry
+                if functionNamePointer == 0:
+                    break
+
+                # Convert functionNamePointer from rva to file offset
+                functionNamePointer_FILEOFF = self._rva_to_offset(functionNamePointer)
+                # Skip past the "Hint" field in _IMAGE_IMPORT_BY_NAME
+                functionNamePointer_FILEOFF += self.formatDict["WORD_S"]
+                # Read the name of the imported function
+                functions.append(
+                    self._read_string_from_offset(functionNamePointer_FILEOFF)
+                )
+
+            # Return the collected list of imported functions
+            return functions
+
+    def _rva_to_offset(self, VirtualAddress) -> int:
+        """Converts a virtual address to a file offset of the address
+
+        Args:
+            VirtualAddress (int): virtual address to convert
+
+        Returns:
+            int: file offset of the provided virtual address
+        """
+
+        # Iterate over parsed sections to determine the section containing VirtualAddress
+        for section in self._IMAGE_SECTION_HEADER_TABLE:
+            # Get section virtual address (s_base) and section size (s_size)
+            s_base = section["VirtualAddress"]
+            s_size = section["SizeOfRawData"]
+
+            # Check if sec.VA + sec.Size contains VirtualAddress
+            if (s_base <= VirtualAddress) and (s_base + s_size > VirtualAddress):
+                offset = VirtualAddress - s_base
+                addr = section["PointerToRawData"] + offset
+                return addr
+
+        # If the virtual address is not found, return 0
+        return 0
+
+    def _read_string_from_offset(self, stringOffset) -> str:
+        """Parses the null terminated string starting at the provided address
+
+        Args:
+            stringOffset (int): file address of string to read
+
+        Returns:
+            str: null terminated string parsed from provided address
+        """
+
+        with open(self.path, "rb") as file:
+            # Jump to provided offset of string
+            file.seek(stringOffset)
+            # Read character-by-character until null terminator
+            parsedString = "".join(iter(lambda: file.read(1).decode("ascii"), "\x00"))
+            # Return the parsed string
+            return parsedString
