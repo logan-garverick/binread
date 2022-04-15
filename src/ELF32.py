@@ -114,6 +114,48 @@ PT_LOOS = 0x60000000
 PT_HIOS = 0x6FFFFFFF
 PT_LOPROC = 0x70000000
 PT_HIPROC = 0x7FFFFFFF
+E_PHDR_FLAGS_DICT = {
+    0x04: "R",
+    0x02: "W",
+    0x01: "X",
+}
+E_SHDR_TYPE_DICT = {
+    0x00000000: "SHT_NULL",
+    0x00000001: "SHT_PROGBITS",
+    0x00000002: "SHT_SYMTAB",
+    0x00000003: "SHT_STRTAB",
+    0x00000004: "SHT_RELA",
+    0x00000005: "SHT_HASH",
+    0x00000006: "SHT_DYNAMIC",
+    0x00000007: "SHT_NOTE",
+    0x00000008: "SHT_NOBITS",
+    0x00000009: "SHT_REL",
+    0x0000000A: "SHT_SHLIB",
+    0x0000000B: "SHT_DYNSYM",
+    0x0000000E: "SHT_INIT_ARRAY",
+    0x0000000F: "SHT_FINI_ARRAY",
+    0x00000010: "SHT_PREINIT_ARRAY",
+    0x00000011: "SHT_GROUP",
+    0x00000012: "SHT_SYMTAB_SHNDX",
+    0x00000013: "SHT_NUM",
+}
+SHT_LOOS = 0x60000000
+E_SHDR_FLAGS_DICT = {
+    0x00000001: "SHF_WRITE",
+    0x00000002: "SHF_ALLOC",
+    0x00000004: "SHF_EXECINSTR",
+    0x00000010: "SHF_MERGE",
+    0x00000020: "SHF_STRINGS",
+    0x00000040: "SHF_INFO_LINK",
+    0x00000080: "SHF_LINK_ORDER",
+    0x00000100: "SHF_OS_NONCONFORMING",
+    0x00000200: "SHF_GROUP",
+    0x00000400: "SHF_TLS",
+    0x0FF00000: "SHF_MASKOS",
+    0xF0000000: "SHF_MASKPROC",
+    0x40000000: "SHF_ORDERED",
+    0x80000000: "SHF_EXCLUDE",
+}
 
 
 class ELF32(BinaryFile):
@@ -131,6 +173,7 @@ class ELF32(BinaryFile):
         self.Elf32_Ehdr_e_ident = self._read_Elf32_Ehdr_e_ident()
         self.Elf32_Ehdr = self._read_Elf32_Ehdr()
         self.Elf32_Phdr_table = self._read_Elf32_Phdr_table()
+        self.Elf32_Shdr_table = self._read_Elf32_Shdr_table()
 
     def print_file_type(self) -> None:
         """Display the file type of the provided binary file"""
@@ -143,40 +186,74 @@ class ELF32(BinaryFile):
 
         print(
             f"ELF HEADER:\n"
-            + f"\te_ident Structure:\t\t{self.Elf32_Ehdr['e_ident'].hex(' ')}\n"
-            + f"\t\tMagic:\t\t\t{self.Elf32_Ehdr_e_ident['EI_MAG'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_MAG']})\n"
-            + f"\t\tClass (Bitness):\t{self.Elf32_Ehdr_e_ident['EI_CLASS'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_CLASSName']})\n"
-            + f"\t\tType (Endianness):\t{self.Elf32_Ehdr_e_ident['EI_DATA'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_DATAName']})\n"
-            + f"\t\tVersion:\t\t{self.Elf32_Ehdr_e_ident['EI_VERSION'].hex(' ')}\n"
-            + f"\t\tABI:\t\t\t{self.Elf32_Ehdr_e_ident['EI_OSABI'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_OSABIName']})\n"
-            + f"\t\tABI Version:\t\t{self.Elf32_Ehdr_e_ident['EI_ABIVERSION'].hex(' ')}\n"
-            + f"\tType:\t\t\t\t{hex(self.Elf32_Ehdr['e_type'])} ({self.Elf32_Ehdr['e_typeName']})\n"
-            + f"\tMachine:\t\t\t{hex(self.Elf32_Ehdr['e_machine'])} ({self.Elf32_Ehdr['e_machineName']})\n"
-            + f"\tVersion:\t\t\t{self.Elf32_Ehdr['e_version']}\n"
-            + f"\tEntry Point:\t\t\t{hex(self.Elf32_Ehdr['e_entry'])}\n"
-            + f"\tProgram Header Offset:\t\t{hex(self.Elf32_Ehdr['e_phoff'])}\n"
-            + f"\tSection Header Offset:\t\t{hex(self.Elf32_Ehdr['e_shoff'])}\n"
-            + f"\tArchitecture Specific Flags:\t{hex(self.Elf32_Ehdr['e_flags'])}\n"
-            + f"\tELF Header Size:\t\t{hex(self.Elf32_Ehdr['e_ehsize'])}\n"
-            + f"\tProgram Header Entry Size:\t{hex(self.Elf32_Ehdr['e_phentsize'])}\n"
-            + f"\tNumber of Program Headers:\t{self.Elf32_Ehdr['e_phnum']}\n"
-            + f"\tSection Header Entry Size:\t{hex(self.Elf32_Ehdr['e_shentsize'])}\n"
-            + f"\tNumber of Section Headers:\t{self.Elf32_Ehdr['e_shnum']}\n"
-            + f"\tSection Name String Table:\t{hex(self.Elf32_Ehdr['e_shstrndx'])}\n"
+            + f"\te_ident Structure:\t\t\t{self.Elf32_Ehdr['e_ident'].hex(' ')}\n"
+            + f"\t\tMagic:\t\t\t\t{self.Elf32_Ehdr_e_ident['EI_MAG'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_MAG']})\n"
+            + f"\t\tClass (Bitness):\t\t{self.Elf32_Ehdr_e_ident['EI_CLASS'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_CLASSName']})\n"
+            + f"\t\tType (Endianness):\t\t{self.Elf32_Ehdr_e_ident['EI_DATA'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_DATAName']})\n"
+            + f"\t\tVersion:\t\t\t{self.Elf32_Ehdr_e_ident['EI_VERSION'].hex(' ')}\n"
+            + f"\t\tABI:\t\t\t\t{self.Elf32_Ehdr_e_ident['EI_OSABI'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_OSABIName']})\n"
+            + f"\t\tABI Version:\t\t\t{self.Elf32_Ehdr_e_ident['EI_ABIVERSION'].hex(' ')}\n"
+            + f"\tType:\t\t\t\t\t{hex(self.Elf32_Ehdr['e_type'])} ({self.Elf32_Ehdr['e_typeName']})\n"
+            + f"\tMachine:\t\t\t\t{hex(self.Elf32_Ehdr['e_machine'])} ({self.Elf32_Ehdr['e_machineName']})\n"
+            + f"\tVersion:\t\t\t\t{self.Elf32_Ehdr['e_version']}\n"
+            + f"\tEntry Point:\t\t\t\t{hex(self.Elf32_Ehdr['e_entry'])}\n"
+            + f"\tProgram Header Offset:\t\t\t{hex(self.Elf32_Ehdr['e_phoff'])}\n"
+            + f"\tSection Header Offset:\t\t\t{hex(self.Elf32_Ehdr['e_shoff'])}\n"
+            + f"\tArchitecture Specific Flags:\t\t{hex(self.Elf32_Ehdr['e_flags'])}\n"
+            + f"\tELF Header Size:\t\t\t{hex(self.Elf32_Ehdr['e_ehsize'])}\n"
+            + f"\tProgram Header Entry Size:\t\t{hex(self.Elf32_Ehdr['e_phentsize'])}\n"
+            + f"\tNumber of Program Headers:\t\t{self.Elf32_Ehdr['e_phnum']}\n"
+            + f"\tSection Header Entry Size:\t\t{hex(self.Elf32_Ehdr['e_shentsize'])}\n"
+            + f"\tNumber of Section Headers:\t\t{self.Elf32_Ehdr['e_shnum']}\n"
+            + f"\tSection Name String Table:\t\t{hex(self.Elf32_Ehdr['e_shstrndx'])}\n"
         )
         # Print the data parsed from the program headers
+        print(f"PROGRAM HEADERS:")
         for idx, Elf32_Phdr in enumerate(self.Elf32_Phdr_table):
             print(
-                f"PROGRAM HEADER [{idx}]:\n"
-                + f"\tType:\t\t\t\t{hex(Elf32_Phdr['p_type'])} ({Elf32_Phdr['p_typeName']})\n"
-                + f"\tOffset:\t\t\t\t{hex(Elf32_Phdr['p_offset'])}\n"
-                + f"\tVirtual Address:\t\t{hex(Elf32_Phdr['p_vaddr'])}\n"
-                + f"\tPhysical Address:\t\t{hex(Elf32_Phdr['p_paddr'])}\n"
-                + f"\tPhysical Size:\t\t\t{hex(Elf32_Phdr['p_filesz'])}\n"
-                + f"\tVirtual Size:\t\t\t{hex(Elf32_Phdr['p_memsz'])}\n"
-                + f"\tSegment Dependent Flags:\t{hex(Elf32_Phdr['p_flags'])}\n"
-                + f"\tAlignment:\t\t\t{hex(Elf32_Phdr['p_align'])}"
+                f"\tPROGRAM HEADER [{idx}]:\n"
+                + f"\t\tType:\t\t\t\t{hex(Elf32_Phdr['p_type'])} ({Elf32_Phdr['p_typeName']})\n"
+                + f"\t\tOffset:\t\t\t\t{hex(Elf32_Phdr['p_offset'])}\n"
+                + f"\t\tVirtual Address:\t\t{hex(Elf32_Phdr['p_vaddr'])}\n"
+                + f"\t\tPhysical Address:\t\t{hex(Elf32_Phdr['p_paddr'])}\n"
+                + f"\t\tPhysical Size:\t\t\t{hex(Elf32_Phdr['p_filesz'])}\n"
+                + f"\t\tVirtual Size:\t\t\t{hex(Elf32_Phdr['p_memsz'])}\n"
+                + f"\t\tFlags:\t\t\t\t{hex(Elf32_Phdr['p_flags'])}",
+                end="",
             )
+            if len(Elf32_Phdr["p_flags_list"]) != 0:
+                print(" (", end="")
+                for flag in Elf32_Phdr["p_flags_list"]:
+                    print(f"{flag}", end="")
+            print(f")\n\t\tAlignment:\t\t\t{hex(Elf32_Phdr['p_align'])}")
+        print("\n", end="")
+
+    def print_section_info(self) -> None:
+        """Prints the section header information parsed from the provided binary for the user to view"""
+
+        print(f"SECTION HEADERS:")
+        for idx, Elf32_Shdr in enumerate(self.Elf32_Shdr_table):
+            print(
+                f"\tSECTION HEADER [{idx}]:\n"
+                + f"\t\tSection Name:\t\t\t{Elf32_Shdr['sh_nameStr']} (.shstrtab Index: {hex(Elf32_Shdr['sh_nameIdx'])})\n"
+                + f"\t\tType:\t\t\t\t{hex(Elf32_Shdr['sh_type'])} ({Elf32_Shdr['sh_typeName']})\n"
+                + f"\t\tFlags:\t\t\t\t{hex(Elf32_Shdr['sh_flags'])}",
+                end="",
+            )
+            if Elf32_Shdr["sh_flags"] != 0:
+                print(f" ({', '.join(Elf32_Shdr['sh_flags_list'])})")
+            else:
+                print(f" (N/A)")
+            print(
+                f"\t\tVirtual Address:\t\t{hex(Elf32_Shdr['sh_addr'])}\n"
+                + f"\t\tPhysical Address:\t\t{hex(Elf32_Shdr['sh_offset'])}\n"
+                + f"\t\tPhysical Size:\t\t\t{hex(Elf32_Shdr['sh_size'])}\n"
+                + f"\t\tLink:\t\t\t\t{hex(Elf32_Shdr['sh_link'])}\n"
+                + f"\t\tInfo (Section Specific):\t{hex(Elf32_Shdr['sh_info'])}\n"
+                + f"\t\tAlignment:\t\t\t{hex(Elf32_Shdr['sh_addralign'])}\n"
+                + f"\t\tLink:\t\t\t\t{hex(Elf32_Shdr['sh_link'])}"
+            )
+        print("\n", end="")
 
     def _find_endianess(self) -> None:
         """ELF files contain a flag in the file header which denotes the endianness of the file"""
@@ -376,7 +453,7 @@ class ELF32(BinaryFile):
         with open(self.path, "rb") as file:
 
             # Jump to the beginning of the program header table
-            file.seek(self.Elf32_Ehdr["e_ehsize"], 0)
+            file.seek(self.Elf32_Ehdr["e_phoff"], 0)
 
             # Initialize a list to hold parsed data from program header entries
             _Elf32_Phdr_table = []
@@ -430,11 +507,18 @@ class ELF32(BinaryFile):
                     self.formatDict["Elf32_Word_F"],
                     file.read(self.formatDict["Elf32_Word_S"]),
                 )
-                # Read p_flags
+                # Read p_flags and translate
                 (_Elf32_Phdr["p_flags"],) = struct.unpack(
                     self.formatDict["Elf32_Word_F"],
                     file.read(self.formatDict["Elf32_Word_S"]),
                 )
+                if _Elf32_Phdr["p_flags"] != 0x0:
+                    # Initialize a list to store parsed flags
+                    _Elf32_Phdr["p_flags_list"] = []
+                    # Translate flag values into a list of flags
+                    for flag in list(E_PHDR_FLAGS_DICT.keys()):
+                        if _Elf32_Phdr["p_flags"] & flag == flag:
+                            _Elf32_Phdr["p_flags_list"].append(E_PHDR_FLAGS_DICT[flag])
                 # Read p_align
                 (_Elf32_Phdr["p_align"],) = struct.unpack(
                     self.formatDict["Elf32_Word_F"],
@@ -445,3 +529,147 @@ class ELF32(BinaryFile):
                 _Elf32_Phdr_table.append(_Elf32_Phdr)
 
             return _Elf32_Phdr_table
+
+    def _read_Elf32_Shdr_table(self) -> list:
+        """Parses information from the Section Headers (Elf32_Shdr structures)
+
+        Returns:
+            list: a list of dictionaries of data parsed from the section header
+        """
+        # Jump to the beginning of the section header table
+        with open(self.path, "rb") as file:
+            file.seek(self.Elf32_Ehdr["e_shoff"], 0)
+
+            # Initialize a list to hold the Elf32_Shdr entries
+            Elf32_Shdr_table = []
+
+            # Iterate through _IMAGE_SECTION_HEADER entries
+            for _idx in range(self.Elf32_Ehdr["e_shnum"]):
+
+                # Refresh the Elf32_Shdr dictionary
+                Elf32_Shdr = {}
+
+                # Read sh_name string table index
+                (Elf32_Shdr["sh_nameIdx"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_type and translate
+                (Elf32_Shdr["sh_type"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                if Elf32_Shdr["sh_type"] in E_SHDR_TYPE_DICT:
+                    Elf32_Shdr["sh_typeName"] = E_SHDR_TYPE_DICT[Elf32_Shdr["sh_type"]]
+                elif Elf32_Shdr["sh_type"] >= SHT_LOOS:
+                    Elf32_Shdr["sh_typeName"] = "Operating System Specific"
+                else:
+                    Elf32_Shdr[
+                        "sh_typeName"
+                    ] = f"{colors.FAIL}{colors.BOLD}ERROR{colors.ENDC}"
+                # Read sh_flags and translate
+                (Elf32_Shdr["sh_flags"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                if Elf32_Shdr["sh_flags"] != 0x0:
+                    # Initialize a list to store parsed flags
+                    Elf32_Shdr["sh_flags_list"] = []
+                    # Translate flag values into a list of flags
+                    for flag in list(E_SHDR_FLAGS_DICT.keys()):
+                        if Elf32_Shdr["sh_flags"] & flag == flag:
+                            Elf32_Shdr["sh_flags_list"].append(E_SHDR_FLAGS_DICT[flag])
+                # Read sh_addr
+                (Elf32_Shdr["sh_addr"],) = struct.unpack(
+                    self.formatDict["Elf32_Addr_F"],
+                    file.read(self.formatDict["Elf32_Addr_S"]),
+                )
+                # Read sh_offset
+                (Elf32_Shdr["sh_offset"],) = struct.unpack(
+                    self.formatDict["Elf32_Off_F"],
+                    file.read(self.formatDict["Elf32_Off_S"]),
+                )
+                # Read sh_size
+                (Elf32_Shdr["sh_size"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_link
+                (Elf32_Shdr["sh_link"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_info
+                (Elf32_Shdr["sh_info"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_addralign
+                (Elf32_Shdr["sh_addralign"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+                # Read sh_entsize
+                (Elf32_Shdr["sh_entsize"],) = struct.unpack(
+                    self.formatDict["Elf32_Word_F"],
+                    file.read(self.formatDict["Elf32_Word_S"]),
+                )
+
+                # Append the Section Header entry to the list
+                Elf32_Shdr_table.append(Elf32_Shdr)
+
+            # Retrieve the file offset of the .shstrtab section
+            shstrtab_base = self._read_shstrtab_offset(Elf32_Shdr_table)
+            # Translate the .shstrtab name indexes into name strings
+            self._convert_shstrtab_idx_to_name(shstrtab_base, Elf32_Shdr_table)
+
+            return Elf32_Shdr_table
+
+    def _read_shstrtab_offset(self, Elf32_Shdr_table) -> int:
+        """Retrieves the offset of the .shstrtab section which contains null terminated names of sections
+
+        Args:
+            Elf32_Shdr_table (list): a list of dictionaries of data parsed from the section headers
+
+        Returns:
+            int: file offset of the .shstrtab section in the file
+        """
+        # Retrieve the section header entry for .shstrtab
+        Elf32_Shdr_shstrtab = Elf32_Shdr_table[self.Elf32_Ehdr["e_shstrndx"]]
+        # Return the offset of the retrieved section
+        return Elf32_Shdr_shstrtab["sh_offset"]
+
+    def _convert_shstrtab_idx_to_name(self, shstrtab_base, Elf32_Shdr_table) -> None:
+        """Converts an index (offset) in the .shstrtab section into the corresponding string
+
+        Args:
+            shstrtab_base (int): file offset of the .shstrtab section in the file
+            Elf32_Shdr_table (list): a list of dictionaries of data parsed from the section headers
+        """
+
+        # Iterate through parsed section headers and convert .shstrtab index to name string
+        for Elf32_Shdr in Elf32_Shdr_table:
+            # Retrieve the .shstrtab index from Elf32_Shdr
+            shstrtab_idx = Elf32_Shdr["sh_nameIdx"]
+            # Retrieve name string from .shstrtab section
+            Elf32_Shdr["sh_nameStr"] = self._read_string_from_offset(
+                shstrtab_base + shstrtab_idx
+            )
+
+    def _read_string_from_offset(self, stringOffset) -> str:
+        """Parses the null terminated string starting at the provided address
+
+        Args:
+            stringOffset (int): file address of string to read
+
+        Returns:
+            str: null terminated string parsed from provided address
+        """
+
+        with open(self.path, "rb") as file:
+            # Jump to provided offset of string
+            file.seek(stringOffset)
+            # Read character-by-character until null terminator
+            parsedString = "".join(iter(lambda: file.read(1).decode("ascii"), "\x00"))
+            # Return the parsed string
+            return parsedString
