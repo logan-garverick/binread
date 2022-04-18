@@ -12,35 +12,62 @@ from bcolors import *
 def configure_parser() -> None:
     """Configures the argparse parser to interpret command line arguments."""
 
+    mutuallyExclusiveGroup = parser.add_mutually_exclusive_group()
+
     parser.add_argument(
         "BINARY",
         action="store",
         type=str,
         help="path to the binary to analyze",
     )
-    parser.add_argument(
+    mutuallyExclusiveGroup.add_argument(
+        "-A",
+        dest="ALL_DEFAULT",
+        default=False,
+        action="store_true",
+        help="display full details collected from provided file (extended format) (default)",
+    )
+    mutuallyExclusiveGroup.add_argument(
         "-a",
-        "--all",
-        dest="ALL",
+        dest="ALL_COMPRESSED",
         default=False,
         action="store_true",
-        help="display full details collected from provided file",
+        help="display full details collected from provided file (compressed format)",
     )
-    parser.add_argument(
+    mutuallyExclusiveGroup.add_argument(
+        "-S",
+        dest="SECTIONS_DEFAULT",
+        default=False,
+        action="store_true",
+        help="display details collected only from the section headers (extended format)",
+    )
+    mutuallyExclusiveGroup.add_argument(
         "-s",
-        "--sections-only",
-        dest="SECTION",
+        dest="SECTIONS_COMPRESSED",
         default=False,
         action="store_true",
-        help="display details collected only from the section headers",
+        help="display details collected only from the section headers (compressed format)",
     )
-    parser.add_argument(
+    mutuallyExclusiveGroup.add_argument(
+        "-F",
+        dest="HEADERS_DEFAULT",
+        default=False,
+        action="store_true",
+        help="display details collected only from the file header (extended format)",
+    )
+    mutuallyExclusiveGroup.add_argument(
         "-f",
-        "--file-only",
+        dest="HEADERS_COMPRESSED",
+        default=False,
+        action="store_true",
+        help="display details collected only from the file header (compressed format)",
+    )
+    mutuallyExclusiveGroup.add_argument(
+        "-i",
         dest="FILE",
         default=False,
         action="store_true",
-        help="display details collected only from the file header",
+        help="only display details about the file format",
     )
 
 
@@ -78,13 +105,42 @@ def get_BinaryFile_from_path(path) -> BinaryFile:
         exit(1)
 
 
+def display_file_info(binary) -> None:
+    """Outputs information parsed from the provided binary with the requested format
+
+    Args:
+        binary (BinaryFile): the BinaryFile instance descriping the provided binary file
+    """
+
+    if args.ALL_COMPRESSED:
+        binary.print_file_type()
+        binary.print_compressed_header_info()
+        binary.print_compressed_section_info()
+    elif args.SECTIONS_DEFAULT:
+        binary.print_file_type()
+        binary.print_section_info()
+    elif args.SECTIONS_COMPRESSED:
+        binary.print_file_type()
+        binary.print_compressed_section_info()
+    elif args.HEADERS_DEFAULT:
+        binary.print_file_type()
+        binary.print_header_info()
+    elif args.HEADERS_COMPRESSED:
+        binary.print_file_type()
+        binary.print_compressed_header_info()
+    elif args.FILE:
+        binary.print_file_type()
+    else:
+        binary.print_file_type()
+        binary.print_header_info()
+        binary.print_section_info()
+
+
 def binread() -> None:
     """Main function of execution for the binread tool"""
 
     binary = get_BinaryFile_from_path(args.BINARY)
-    binary.print_file_type()
-    binary.print_header_info()
-    binary.print_section_info()
+    display_file_info(binary)
 
 
 if __name__ == "__main__":
