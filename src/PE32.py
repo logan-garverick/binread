@@ -257,6 +257,10 @@ class PE32(BinaryFile):
                     print(f"No functions imported.")
             print("\n", end="")
 
+    def print_compressed_header_info(self) -> None:
+        """Prints a compressed version of the header information parsed from the provided binary for the user to view"""
+        pass
+
     def print_section_info(self) -> None:
         """Prints the section header information parsed from the provided binary for the user to view"""
 
@@ -291,6 +295,10 @@ class PE32(BinaryFile):
             for characteristic in _IMAGE_SECTION_HEADER["ListOfChars"]:
                 print(f"\t\t\t\t\t{characteristic}")
         print("\n", end="")
+
+    def print_compressed_section_info(self) -> None:
+        """Prints a compressed version of the section header information parsed from the provided binary for the user to view"""
+        pass
 
     def _find_endianess(self) -> None:
         """All windows PE formats are assumed to be compiled in Little Endian format"""

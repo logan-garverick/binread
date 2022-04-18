@@ -12,7 +12,6 @@
             "program": "${workspaceFolder}/src/binread.py",
             "console": "integratedTerminal",
             "args": [
-                "-a",
                 "${workspaceFolder}/examples/hello_pe32.exe"
             ],
             "justMyCode": true
@@ -25,7 +24,6 @@
             "program": "${workspaceFolder}/src/binread.py",
             "console": "integratedTerminal",
             "args": [
-                "-a",
                 "${workspaceFolder}/examples/hello_pe32+.exe"
             ],
             "justMyCode": true
@@ -38,7 +36,6 @@
             "program": "${workspaceFolder}/src/binread.py",
             "console": "integratedTerminal",
             "args": [
-                "-a",
                 "${workspaceFolder}/examples/hello_elf32"
             ],
             "justMyCode": true
@@ -51,7 +48,266 @@
             "program": "${workspaceFolder}/src/binread.py",
             "console": "integratedTerminal",
             "args": [
+                "${workspaceFolder}/examples/hello_elf64"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit PE (-a)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
                 "-a",
+                "${workspaceFolder}/examples/hello_pe32.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit PE (-a)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-a",
+                "${workspaceFolder}/examples/hello_pe32+.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit ELF (-a)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-a",
+                "${workspaceFolder}/examples/hello_elf32"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit ELF (-a)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-a",
+                "${workspaceFolder}/examples/hello_elf64"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit PE (-F)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-F",
+                "${workspaceFolder}/examples/hello_pe32.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit PE (-F)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-F",
+                "${workspaceFolder}/examples/hello_pe32+.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit ELF (-F)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-F",
+                "${workspaceFolder}/examples/hello_elf32"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit ELF (-F)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-F",
+                "${workspaceFolder}/examples/hello_elf64"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit PE (-f)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-f",
+                "${workspaceFolder}/examples/hello_pe32.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit PE (-f)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-f",
+                "${workspaceFolder}/examples/hello_pe32+.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit ELF (-f)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-f",
+                "${workspaceFolder}/examples/hello_elf32"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit ELF (-f)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-f",
+                "${workspaceFolder}/examples/hello_elf64"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit PE (-S)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-S",
+                "${workspaceFolder}/examples/hello_pe32.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit PE (-S)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-S",
+                "${workspaceFolder}/examples/hello_pe32+.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit ELF (-S)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-S",
+                "${workspaceFolder}/examples/hello_elf32"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit ELF (-S)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-S",
+                "${workspaceFolder}/examples/hello_elf64"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit PE (-s)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-s",
+                "${workspaceFolder}/examples/hello_pe32.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit PE (-s)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-s",
+                "${workspaceFolder}/examples/hello_pe32+.exe"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "32-bit ELF (-s)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-s",
+                "${workspaceFolder}/examples/hello_elf32"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "64-bit ELF (-s)",
+            "type": "python",
+            "python": "${workspaceFolder}/venv/bin/python",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/binread.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-s",
                 "${workspaceFolder}/examples/hello_elf64"
             ],
             "justMyCode": true

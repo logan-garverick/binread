@@ -231,6 +231,10 @@ class ELF64(BinaryFile):
             )
         print("\n", end="")
 
+    def print_compressed_header_info(self) -> None:
+        """Prints a compressed version of the header information parsed from the provided binary for the user to view"""
+        pass
+
     def print_section_info(self) -> None:
         """Prints the section header information parsed from the provided binary for the user to view"""
 
@@ -257,6 +261,10 @@ class ELF64(BinaryFile):
                 + f"\t\tLink:\t\t\t\t{hex(Elf64_Shdr['sh_link'])}"
             )
         print("\n", end="")
+
+    def print_compressed_section_info(self) -> None:
+        """Prints a compressed version of the section header information parsed from the provided binary for the user to view"""
+        pass
 
     def _find_endianess(self) -> None:
         """ELF files contain a flag in the file header which denotes the endianness of the file"""

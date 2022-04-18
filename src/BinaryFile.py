@@ -22,5 +22,13 @@ class BinaryFile:
         """Displays the information parsed from the provided binary file's headers"""
 
     @abstractmethod
+    def print_compressed_header_info(self) -> None:
+        """Displays a compressed version of the information parsed from the provided binary file's headers"""
+
+    @abstractmethod
     def print_section_info(self) -> None:
         """Displays the information parsed from the provided binary file's section headers"""
+
+    @abstractmethod
+    def print_compressed_section_info(self) -> None:
+        """Displays a compressed version of the information parsed from the provided binary file's section headers"""
