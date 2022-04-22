@@ -166,7 +166,7 @@ class PE32(BinaryFile):
         """Prints the header information parsed from the provided binary for the user to view"""
 
         print(
-            f"DOS HEADER (_IMAGE_DOS_HEADER):\n"
+            f"{colors.BOLD}{colors.OKBLUE}DOS HEADER (_IMAGE_DOS_HEADER):{colors.ENDC}\n"
             + f"    Magic Number:\t\t\t{hex(self._IMAGE_DOS_HEADER['e_magic'])} ({self._IMAGE_DOS_HEADER['e_magic_characters']})\n"
             + f"    Bytes in Last Page:\t\t\t{self._IMAGE_DOS_HEADER['e_cblp']}\n"
             + f"    Pages in File:\t\t\t{self._IMAGE_DOS_HEADER['e_cp']}\n"
@@ -185,7 +185,7 @@ class PE32(BinaryFile):
             + f"    OEM Information:\t\t\t{self._IMAGE_DOS_HEADER['e_oeminfo']}\n"
             + f"    File Address of New Exe Header:\t{hex(self._IMAGE_DOS_HEADER['e_lfanew'])}\n"
             + f"\n"
-            + f"COFF/FILE HEADER (_IMAGE_FILE_HEADER):\n"
+            + f"{colors.BOLD}{colors.OKBLUE}COFF/FILE HEADER (_IMAGE_FILE_HEADER):{colors.ENDC}\n"
             + f"    Machine:\t\t\t\t{hex(self._IMAGE_FILE_HEADER['Machine'])} ({self._IMAGE_FILE_HEADER['MachineName']})\n"
             + f"    Number of Sections:\t\t\t{self._IMAGE_FILE_HEADER['NumberOfSections']}\n"
             + f"    Time Stamp:\t\t\t\t{self._IMAGE_FILE_HEADER['TimeDateStamp']}\n"
@@ -200,7 +200,7 @@ class PE32(BinaryFile):
                 print(f"       - {characteristic}")
         print(
             f"\n"
-            + f"OPTIONAL HEADER (_IMAGE_OPTIONAL_HEADER):\n"
+            + f"{colors.BOLD}{colors.OKBLUE}OPTIONAL HEADER (_IMAGE_OPTIONAL_HEADER):{colors.ENDC}\n"
             + f"    Magic:\t\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['Magic'])} ({self._IMAGE_OPTIONAL_HEADER['MagicName']})\n"
             + f"    Linker Version:\t\t\t{self._IMAGE_OPTIONAL_HEADER['MajorLinkerVersion']}.{self._IMAGE_OPTIONAL_HEADER['MinorLinkerVersion']}\n"
             + f"    Size of .text section:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfCode'])}\n"
@@ -234,7 +234,7 @@ class PE32(BinaryFile):
             + f"    Loader Flags:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['LoaderFlags'])}\n"
             + f"    Number of RVA and Sizes:\t\t{self._IMAGE_OPTIONAL_HEADER['NumberOfRvaAndSizes']}\n"
             + f"\n"
-            + f"DATA DIRECTORIES (_IMAGE_OPTIONAL_HEADER):"
+            + f"{colors.BOLD}{colors.OKBLUE}DATA DIRECTORIES (_IMAGE_OPTIONAL_HEADER):{colors.ENDC}"
         )
         # Create a list of DATA_DIRECTORY names from dictionary keys
         DATA_DIRECTORIES = list(self._IMAGE_DATA_DIRECTORY_TABLE.keys())
@@ -246,7 +246,7 @@ class PE32(BinaryFile):
         print("\n", end="")
         # Display the imported DLLs and associated functions (if any exist)
         if self._IMAGE_IMPORT_DESCRIPTOR_DLLS != None:
-            print(f"IMPORTED DLLS:")
+            print(f"{colors.BOLD}{colors.OKBLUE}IMPORTED DLLS:{colors.ENDC}")
             for DLL in self._IMAGE_IMPORT_DESCRIPTOR_DLLS:
                 print(f"\t{DLL['Name']}:")
                 # If there are functions imported from the DLL, display them
@@ -259,15 +259,39 @@ class PE32(BinaryFile):
 
     def print_compressed_header_info(self) -> None:
         """Prints a compressed version of the header information parsed from the provided binary for the user to view"""
-        pass
+
+        print(
+            f"{colors.BOLD}{colors.OKBLUE}FILE HEADER INFORMATION:{colors.ENDC}\n"
+            + f"\t{colors.BOLD}{colors.OKCYAN}DOS HEADER:{colors.ENDC}\n"
+            + f"\t\tMagic:\t\t\t\t{hex(self._IMAGE_DOS_HEADER['e_magic'])} ({self._IMAGE_DOS_HEADER['e_magic_characters']})\n"
+            + f"\t\tOffset of New Exe Header:\t{hex(self._IMAGE_DOS_HEADER['e_lfanew'])}\n"
+            + f"\t{colors.BOLD}{colors.OKCYAN}COFF/FILE HEADER:{colors.ENDC}\n"
+            + f"\t\tMachine:\t\t\t{hex(self._IMAGE_FILE_HEADER['Machine'])} ({self._IMAGE_FILE_HEADER['MachineName']})\n"
+            + f"\t\tNumber of Sections:\t\t{self._IMAGE_FILE_HEADER['NumberOfSections']}\n"
+            + f"\t\tCharacteristics:\t\t{hex(self._IMAGE_FILE_HEADER['Characteristics'])}\n"
+            + f"\t{colors.BOLD}{colors.OKCYAN}OPTIONAL HEADER:{colors.ENDC}\n"
+            + f"\t\tMagic:\t\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['Magic'])} ({self._IMAGE_OPTIONAL_HEADER['MagicName']})\n"
+            + f"\t\tSize of .text section:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SizeOfCode'])}\n"
+            + f"\t\tBase of .text section:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['BaseOfCode'])}\n"
+            + f"\t\tEntry Point:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['AddressOfEntryPoint'])}\n"
+            + f"\t\tImage Base:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['ImageBase'])}\n"
+            + f"\t\tSection Alignment:\t\t{hex(self._IMAGE_OPTIONAL_HEADER['SectionAlignment'])}\n"
+            + f"\t\tFile Alignment:\t\t\t{hex(self._IMAGE_OPTIONAL_HEADER['FileAlignment'])}\n"
+            + f"\t{colors.BOLD}{colors.OKCYAN}IMPORTED DLLS:{colors.ENDC}"
+        )
+        for DLL in self._IMAGE_IMPORT_DESCRIPTOR_DLLS:
+            print(f"\t\tName:\t\t\t\t{DLL['Name']}")
+        print("\n", end="")
 
     def print_section_info(self) -> None:
         """Prints the section header information parsed from the provided binary for the user to view"""
 
-        print(f"SECTION HEADERS (_IMAGE_SECTION_HEADER):\n")
+        print(
+            f"{colors.BOLD}{colors.OKBLUE}SECTION HEADERS (_IMAGE_SECTION_HEADER):{colors.ENDC}"
+        )
         for idx, _IMAGE_SECTION_HEADER in enumerate(self._IMAGE_SECTION_HEADER_TABLE):
             print(
-                f"\tSection Header [{idx}]:\n"
+                f"\t{colors.BOLD}{colors.OKCYAN}Section Header [{idx}]:{colors.ENDC}\n"
                 + f"\t\tName:\t\t\t{_IMAGE_SECTION_HEADER['NameCharacters']}"
             )
             # Decide if Misc Holds Physical Address or Virtual Size
@@ -298,7 +322,29 @@ class PE32(BinaryFile):
 
     def print_compressed_section_info(self) -> None:
         """Prints a compressed version of the section header information parsed from the provided binary for the user to view"""
-        pass
+
+        print(f"{colors.BOLD}{colors.OKBLUE}SECTION INFORMATION:{colors.ENDC}")
+        print(
+            f"\t|{colors.BOLD}{colors.OKCYAN} [Nr] {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}   Name   {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}   Address (V)   {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}   Address (P)   {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}    Size    {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN} Characteristics {colors.ENDC}|\n"
+            + f"\t-----------------------------------------------------------------------------------"
+        )
+        for idx, _IMAGE_SECTION_HEADER in enumerate(self._IMAGE_SECTION_HEADER_TABLE):
+            print(
+                "\t| [{:>2}] |{:^10}|{:^17}|{:^17}|{:^12}|{:^17}|".format(
+                    idx,
+                    _IMAGE_SECTION_HEADER["NameCharacters"].rstrip("\x00"),
+                    hex(_IMAGE_SECTION_HEADER["VirtualAddress"]),
+                    hex(_IMAGE_SECTION_HEADER["PointerToRawData"]),
+                    hex(_IMAGE_SECTION_HEADER["SizeOfRawData"]),
+                    hex(_IMAGE_SECTION_HEADER["Characteristics"]),
+                )
+            )
+        print("\n", end="")
 
     def _find_endianess(self) -> None:
         """All windows PE formats are assumed to be compiled in Little Endian format"""
@@ -678,7 +724,7 @@ class PE32(BinaryFile):
                 # )
                 _IMAGE_SECTION_HEADER["NameCharacters"] = _IMAGE_SECTION_HEADER[
                     "Name"
-                ].decode("utf-8")
+                ].decode("utf-8", "strict")
                 # Read Misc (union{Physical Address, Virtual Size})
                 (_IMAGE_SECTION_HEADER["Misc"],) = struct.unpack(
                     self.formatDict["DWORD_F"], file.read(self.formatDict["DWORD_S"])

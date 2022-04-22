@@ -185,7 +185,7 @@ class ELF32(BinaryFile):
         """Prints the header information parsed from the provided binary for the user to view"""
 
         print(
-            f"ELF HEADER:\n"
+            f"{colors.BOLD}{colors.OKBLUE}ELF HEADER:{colors.ENDC}\n"
             + f"\te_ident Structure:\t\t\t{self.Elf32_Ehdr['e_ident'].hex(' ')}\n"
             + f"\t\tMagic:\t\t\t\t{self.Elf32_Ehdr_e_ident['EI_MAG'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_MAG']})\n"
             + f"\t\tClass (Bitness):\t\t{self.Elf32_Ehdr_e_ident['EI_CLASS'].hex(' ')} ({self.Elf32_Ehdr_e_ident['EI_CLASSName']})\n"
@@ -208,10 +208,10 @@ class ELF32(BinaryFile):
             + f"\tSection Name String Table:\t\t{hex(self.Elf32_Ehdr['e_shstrndx'])}\n"
         )
         # Print the data parsed from the program headers
-        print(f"PROGRAM HEADERS:")
+        print(f"{colors.BOLD}{colors.OKBLUE}PROGRAM HEADERS:{colors.ENDC}")
         for idx, Elf32_Phdr in enumerate(self.Elf32_Phdr_table):
             print(
-                f"\tPROGRAM HEADER [{idx}]:\n"
+                f"\t{colors.BOLD}{colors.OKCYAN}PROGRAM HEADER [{idx}]:{colors.ENDC}\n"
                 + f"\t\tType:\t\t\t\t{hex(Elf32_Phdr['p_type'])} ({Elf32_Phdr['p_typeName']})\n"
                 + f"\t\tOffset:\t\t\t\t{hex(Elf32_Phdr['p_offset'])}\n"
                 + f"\t\tVirtual Address:\t\t{hex(Elf32_Phdr['p_vaddr'])}\n"
@@ -230,15 +230,52 @@ class ELF32(BinaryFile):
 
     def print_compressed_header_info(self) -> None:
         """Prints a compressed version of the header information parsed from the provided binary for the user to view"""
-        pass
+
+        print(
+            f"{colors.BOLD}{colors.OKBLUE}ELF HEADER INFORMATION:{colors.ENDC}\n"
+            + f"\tClass (Bitness):\t{self.Elf32_Ehdr_e_ident['EI_CLASSName']}\n"
+            + f"\tType (Endianness):\t{self.Elf32_Ehdr_e_ident['EI_DATAName']}\n"
+            + f"\tFile Type:\t\t{hex(self.Elf32_Ehdr['e_type'])} ({self.Elf32_Ehdr['e_typeName']})\n"
+            + f"\tMachine:\t\t{hex(self.Elf32_Ehdr['e_machine'])} ({self.Elf32_Ehdr['e_machineName']})\n"
+            + f"\tEntry Point:\t\t{hex(self.Elf32_Ehdr['e_entry'])}\n"
+        )
+        print(f"{colors.BOLD}{colors.OKBLUE}PROGRAM HEADER INFORMATION:{colors.ENDC}")
+        print(
+            f"\t|{colors.BOLD}{colors.OKCYAN} [Nr] {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}      Type      {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN} Flags {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}   Address (V)   {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}    Size (V)    {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}   Address (P)   {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}    Size (P)    {colors.ENDC}|\n"
+            + f"\t-------------------------------------------------------------------------------------------------------"
+        )
+        for idx, Elf32_Phdr in enumerate(self.Elf32_Phdr_table):
+            # Get Program Header Flag Translation
+            p_flags_str = ""
+            if len(Elf32_Phdr["p_flags_list"]) != 0:
+                for flag in Elf32_Phdr["p_flags_list"]:
+                    p_flags_str += flag
+            print(
+                "\t| [{:>2}] |{:^16}|{:^7}|{:^17}|{:^16}|{:^17}|{:^16}|".format(
+                    idx,
+                    Elf32_Phdr["p_typeName"],
+                    p_flags_str,
+                    hex(Elf32_Phdr["p_vaddr"]),
+                    hex(Elf32_Phdr["p_memsz"]),
+                    hex(Elf32_Phdr["p_paddr"]),
+                    hex(Elf32_Phdr["p_filesz"]),
+                ),
+            )
+        print("\n", end="")
 
     def print_section_info(self) -> None:
         """Prints the section header information parsed from the provided binary for the user to view"""
 
-        print(f"SECTION HEADERS:")
+        print(f"{colors.BOLD}{colors.OKBLUE}SECTION HEADERS:{colors.ENDC}")
         for idx, Elf32_Shdr in enumerate(self.Elf32_Shdr_table):
             print(
-                f"\tSECTION HEADER [{idx}]:\n"
+                f"\t{colors.BOLD}{colors.OKCYAN}SECTION HEADER [{idx}]:{colors.ENDC}\n"
                 + f"\t\tSection Name:\t\t\t{Elf32_Shdr['sh_nameStr']} (.shstrtab Index: {hex(Elf32_Shdr['sh_nameIdx'])})\n"
                 + f"\t\tType:\t\t\t\t{hex(Elf32_Shdr['sh_type'])} ({Elf32_Shdr['sh_typeName']})\n"
                 + f"\t\tFlags:\t\t\t\t{hex(Elf32_Shdr['sh_flags'])}",
@@ -255,13 +292,37 @@ class ELF32(BinaryFile):
                 + f"\t\tLink:\t\t\t\t{hex(Elf32_Shdr['sh_link'])}\n"
                 + f"\t\tInfo (Section Specific):\t{hex(Elf32_Shdr['sh_info'])}\n"
                 + f"\t\tAlignment:\t\t\t{hex(Elf32_Shdr['sh_addralign'])}\n"
-                + f"\t\tLink:\t\t\t\t{hex(Elf32_Shdr['sh_link'])}"
             )
         print("\n", end="")
 
     def print_compressed_section_info(self) -> None:
         """Prints a compressed version of the section header information parsed from the provided binary for the user to view"""
-        pass
+
+        print(f"{colors.BOLD}{colors.OKBLUE}SECTION INFORMATION:{colors.ENDC}")
+        print(
+            f"\t|{colors.BOLD}{colors.OKCYAN} [Nr] {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}        Name        {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}        Type        {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}     Address     {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}     Offset     {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}      Size      {colors.ENDC}|"
+            + f"{colors.BOLD}{colors.OKCYAN}   Flags   {colors.ENDC}|\n"
+            + f"\t------------------------------------------------------------------------------------------------------------------"
+        )
+        for idx, Elf32_Shdr in enumerate(self.Elf32_Shdr_table):
+            pass
+            print(
+                "\t| [{:>2}] |{:^20}|{:^20}|{:^17}|{:^16}|{:^16}|{:^11}|".format(
+                    idx,
+                    Elf32_Shdr["sh_nameStr"],
+                    Elf32_Shdr["sh_typeName"],
+                    hex(Elf32_Shdr["sh_addr"]),
+                    hex(Elf32_Shdr["sh_offset"]),
+                    hex(Elf32_Shdr["sh_size"]),
+                    hex(Elf32_Shdr["sh_flags"]),
+                ),
+            )
+        print("\n", end="")
 
     def _find_endianess(self) -> None:
         """ELF files contain a flag in the file header which denotes the endianness of the file"""
@@ -374,7 +435,7 @@ class ELF32(BinaryFile):
             if _Elf32_Ehdr["e_type"] in E_TYPE_DICT:
                 _Elf32_Ehdr["e_typeName"] = E_TYPE_DICT[_Elf32_Ehdr["e_type"]]
             elif _Elf32_Ehdr["e_type"] > ET_LOOS and _Elf32_Ehdr["e_type"] < ET_HIOS:
-                _Elf32_Ehdr["e_typeName"] = "Operating System Specific"
+                _Elf32_Ehdr["e_typeName"] = "OS Specific"
             elif (
                 _Elf32_Ehdr["e_type"] > ET_LOPROC and _Elf32_Ehdr["e_type"] < ET_HIPROC
             ):
@@ -480,7 +541,7 @@ class ELF32(BinaryFile):
                 elif (
                     _Elf32_Phdr["p_type"] > PT_LOOS and _Elf32_Phdr["p_type"] < PT_HIOS
                 ):
-                    _Elf32_Phdr["p_typeName"] = "Operating System Specific"
+                    _Elf32_Phdr["p_typeName"] = "OS Specific"
                 elif (
                     _Elf32_Phdr["p_type"] > PT_LOPROC
                     and _Elf32_Phdr["p_type"] < PT_HIPROC
@@ -570,7 +631,7 @@ class ELF32(BinaryFile):
                 if Elf32_Shdr["sh_type"] in E_SHDR_TYPE_DICT:
                     Elf32_Shdr["sh_typeName"] = E_SHDR_TYPE_DICT[Elf32_Shdr["sh_type"]]
                 elif Elf32_Shdr["sh_type"] >= SHT_LOOS:
-                    Elf32_Shdr["sh_typeName"] = "Operating System Specific"
+                    Elf32_Shdr["sh_typeName"] = "OS Specific"
                 else:
                     Elf32_Shdr[
                         "sh_typeName"
