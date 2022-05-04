@@ -24,9 +24,10 @@ To build a single binary file of the Binread tool using PyInstaller, follow thes
    ```
    sudo apt install python3-pip
    ```
-4. Install PyInstaller.
+4. Create and activate virtual environment
    ```
-   sudo pip3 install --upgrade --force-reinstall pyinstaller
+   python3 -m venv env
+   source env/bin/activate
    ```
 5. Run the `build.sh` bash script.
    ```

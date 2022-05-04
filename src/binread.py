@@ -3,7 +3,9 @@ Description: Main execution point for the BinRead tool.
 """
 
 import argparse
+import errno
 from os.path import exists
+from sys import exit
 from BinaryFileFactory import BinaryFileFactory
 from BinaryFile import BinaryFile
 from bcolors import *
@@ -101,7 +103,7 @@ def get_BinaryFile_from_path(path) -> BinaryFile:
         else:
             raise FileNotFoundError
     except FileNotFoundError:
-        print(f"\t{colors.FAIL}ERROR:{colors.ENDC}{args.binary} was not found.")
+        print(f"\t{colors.FAIL}ERROR:{colors.ENDC}{args.BINARY} was not found.")
         exit(1)
 
 

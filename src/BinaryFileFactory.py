@@ -5,6 +5,7 @@ Description: This file defines the BinaryFileFactory class and its associated me
 
 from abc import ABC
 import struct
+from typing import Optional
 from BinaryFile import BinaryFile
 from ELF32 import ELF32
 from ELF64 import ELF64
@@ -45,8 +46,13 @@ class BinaryFileFactory(ABC):
 
         # Determine file format details
         fileFormatDict = self._read_magic(path)
+        if fileFormatDict == None:
+            return None
+
         fileFormat = fileFormatDict["ABBR"]
         bitAddressingScheme = self._read_bitness(path, fileFormatDict)
+        if fileFormatDict == None:
+            return None
 
         # Generate the appropriate BinaryFile instance based on determined file format details
         if (fileFormat == "ELF") and (bitAddressingScheme == 32):
@@ -76,8 +82,9 @@ class BinaryFileFactory(ABC):
                 if fileHeader.startswith(format.get("MAGIC")):
                     return format
             return None
+        return None
 
-    def _read_bitness(self, path, fileFormatDict) -> int:
+    def _read_bitness(self, path, fileFormatDict) -> Optional[int]:
         """Read the bit addressing scheme from the provided binary
 
         Args:
@@ -114,3 +121,4 @@ class BinaryFileFactory(ABC):
                         bitAddressing
                     ):
                         return bitAddressing
+        return None
